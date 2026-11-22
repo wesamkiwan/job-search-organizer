@@ -12,6 +12,8 @@ dependencies = [
 dev = [
     "django-stubs[compatible-mypy]>=6.1.2",
     "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-django>=4.14.0",
     "ruff>=0.17.6",
 ]
 
@@ -59,3 +61,10 @@ django_settings_module = "config.settings.test"
 [[tool.mypy.overrides]]
 module = ["environ.*"]          # django-environ ships without type information
 ignore_missing_imports = true
+
+# --- pytest: test runner -------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--strict-markers"
