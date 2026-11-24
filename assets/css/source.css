@@ -1,0 +1,3 @@
+/* Tailwind entry point (kept outside static/ so collectstatic never ships it).
+   Compiled to static/css/dist/tailwind.css (git-ignored). */
+@import "tailwindcss";

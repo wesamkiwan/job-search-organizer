@@ -28,8 +28,12 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 ]
-THIRD_PARTY_APPS: list[str] = []
-LOCAL_APPS: list[str] = []
+THIRD_PARTY_APPS = [
+    "django_tailwind_cli",
+]
+LOCAL_APPS = [
+    "organizer.core",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -107,3 +111,13 @@ STATIC_ROOT = BASE_DIR / "staticfiles"  # where "collectstatic" gathers files fo
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"  # uploaded documents (never committed to git)
+
+
+# --- Tailwind CSS (django-tailwind-cli) ---------------------------------------------
+# The standalone Tailwind binary (no Node.js needed) scans our templates for class
+# names and compiles SRC_CSS into DIST_CSS. DIST_CSS is relative to STATICFILES_DIRS[0]
+# and is a build output, so it is git-ignored.
+
+TAILWIND_CLI_VERSION = "4.3.5"  # pinned: "latest" would change the build silently
+TAILWIND_CLI_SRC_CSS = "assets/css/source.css"
+TAILWIND_CLI_DIST_CSS = "css/dist/tailwind.css"
