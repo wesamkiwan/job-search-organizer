@@ -1,3 +1,227 @@
-/* Tailwind entry point (kept outside static/ so collectstatic never ships it).
-   Compiled to static/css/dist/tailwind.css (git-ignored). */
+/*
+ * Design tokens and Tailwind entry point.
+ *
+ * Theme: "Paper & Ink" (warm paper, near-black ink, deep pine accent).
+ * To change the look, edit the values in :root and [data-theme="dark"] only. Templates use
+ * the token names (bg-canvas, text-ink, border-line, ...) and follow automatically.
+ *
+ * How it fits together:
+ *   1. :root / [data-theme="dark"]  -> plain CSS variables with the real colour values.
+ *   2. @theme inline               -> turns those variables into Tailwind classes.
+ * Text colours meet WCAG AA contrast (>= 4.5:1) on canvas, surface and surface-muted.
+ */
+
 @import "tailwindcss";
+
+/* `dark:` classes apply when <html data-theme="dark">, not only via the OS setting,
+   so the user's toggle choice wins. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ---------------------------------------------------------------------------
+ * Fonts: self-hosted IBM Plex (SIL Open Font License, see static/fonts/ibm-plex/LICENSE.txt).
+ * Self-hosted instead of Google Fonts: no request to a third party (GDPR) and works offline.
+ * Paths are relative to the compiled file static/css/dist/tailwind.css.
+ * unicode-range: the browser only downloads the file if the page uses those characters.
+ * ------------------------------------------------------------------------- */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 100 700; /* variable font: one file, every weight */
+  font-display: swap;
+  src: url("../../fonts/ibm-plex/ibm-plex-sans-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("../../fonts/ibm-plex/ibm-plex-sans-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../fonts/ibm-plex/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../../fonts/ibm-plex/ibm-plex-mono-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../fonts/ibm-plex/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../../fonts/ibm-plex/ibm-plex-mono-latin-ext-500-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------------------------------------------------------------------------
+ * 1. Token values. Light theme is the default.
+ * ------------------------------------------------------------------------- */
+:root {
+  color-scheme: light; /* native parts (scrollbars, date pickers) match the theme */
+
+  /* Neutrals: warm "paper" greys instead of cold blue-greys */
+  --canvas: #faf8f4; /* page background */
+  --surface: #ffffff; /* cards, tables, inputs */
+  --surface-muted: #f3f0ea; /* hover rows, subtle panels */
+  --line: #e6e1d8; /* hairline borders, dividers */
+  --line-strong: #cfc8bc; /* emphasised dividers */
+  --line-input: #958e82; /* form field borders (>= 3:1, visible) */
+
+  /* Text */
+  --ink: #1c1b19; /* main text */
+  --ink-muted: #615c54; /* secondary text, labels */
+  --ink-subtle: #736e65; /* hints, placeholders, timestamps */
+
+  /* Accent: deep pine green, used sparingly (primary action, links, focus) */
+  --accent: #2f5d50;
+  --accent-hover: #244a40;
+  --on-accent: #ffffff; /* text on an accent background */
+  --accent-soft: #e3ede8; /* selected rows, subtle highlights */
+
+  /* Status (pipeline badges, alerts). Each has a soft background for badges. */
+  --success: #2e6b34;
+  --success-soft: #e4efe2;
+  --warning: #8a5a00;
+  --warning-soft: #f5ebd7;
+  --danger: #a83a2e;
+  --danger-soft: #f6e3df;
+  --info: #2b5a85;
+  --info-soft: #e2eaf3;
+
+  /* Shadow only for things floating above the page (menus, modals) */
+  --popover-shadow: 0 4px 16px rgb(28 27 25 / 0.08), 0 1px 3px rgb(28 27 25 / 0.06);
+}
+
+/* Dark theme: warm near-black, not pure black (easier on the eyes, keeps the paper feel). */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --canvas: #161513;
+  --surface: #1e1d1a;
+  --surface-muted: #272521;
+  --line: #2f2d29;
+  --line-strong: #45423c;
+  --line-input: #75716a;
+
+  --ink: #ece8e1;
+  --ink-muted: #a8a398;
+  --ink-subtle: #948f84;
+
+  --accent: #7fb8a4;
+  --accent-hover: #9acaba;
+  --on-accent: #10201b;
+  --accent-soft: #1e2f28;
+
+  --success: #8dc48a;
+  --success-soft: #1d2d1d;
+  --warning: #e0b05a;
+  --warning-soft: #33291a;
+  --danger: #ee8b80;
+  --danger-soft: #3a2320;
+  --info: #8fb4de;
+  --info-soft: #1c2938;
+
+  --popover-shadow: 0 4px 16px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Map the tokens to Tailwind classes.
+ * `inline`: classes use var(--canvas) directly, so they follow the theme switch.
+ * `--color-*: initial` removes Tailwind's default palette (slate-500, indigo-600, ...):
+ * only our tokens exist, so no random colours can sneak into templates.
+ * ------------------------------------------------------------------------- */
+@theme inline {
+  --color-*: initial;
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-input: var(--line-input);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* Small radii: precise tool, not a soft landing page. Same in both themes. */
+  --radius-*: initial;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --shadow-*: initial; /* no soft drop shadows on cards; borders do that job */
+  --shadow-popover: var(--popover-shadow);
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. Page-wide defaults.
+ * ------------------------------------------------------------------------- */
+@layer base {
+  html {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Tailwind v4 borders default to the text colour; use the hairline token instead. */
+  *,
+  ::before,
+  ::after,
+  ::backdrop {
+    border-color: var(--line);
+  }
+
+  ::selection {
+    background-color: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  /* Visible keyboard focus everywhere (accessibility), but not on mouse click. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
