@@ -5,28 +5,26 @@ One sidebar navigation item.
   url_name: optional, e.g. "core:home". Without it the page doesn't exist yet and the item shows "Soon".
 The current page is highlighted (and marked aria-current="page" for screen readers).
 {% endcomment %}
-{% with icon_template="icons/"|add:icon|add:".html" %}
-  {% if url_name %}
-    {% url url_name as href %}
-    {% if request.resolver_match.view_name == url_name %}
-      <a href="{{ href }}" aria-current="page"
-         class="flex items-center gap-2.5 rounded-md bg-accent-soft px-2.5 py-1.5 text-sm font-medium text-accent">
-        {% include icon_template %}
-        {{ label }}
-      </a>
-    {% else %}
-      <a href="{{ href }}"
-         class="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink">
-        {% include icon_template %}
-        {{ label }}
-      </a>
-    {% endif %}
-  {% else %}
-    <span aria-disabled="true"
-          class="flex cursor-not-allowed items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-ink-subtle">
-      {% include icon_template %}
+{% if url_name %}
+  {% url url_name as href %}
+  {% if request.resolver_match.view_name == url_name %}
+    <a href="{{ href }}" aria-current="page"
+       class="flex items-center gap-2.5 rounded-md bg-accent-soft px-2.5 py-1.5 text-sm font-medium text-accent">
+      <c-icon :name="icon" />
       {{ label }}
-      <span class="ml-auto rounded-sm border border-line px-1.5 text-xs">Soon</span>
-    </span>
+    </a>
+  {% else %}
+    <a href="{{ href }}"
+       class="flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-ink-muted hover:bg-surface-muted hover:text-ink">
+      <c-icon :name="icon" />
+      {{ label }}
+    </a>
   {% endif %}
-{% endwith %}
+{% else %}
+  <span aria-disabled="true"
+        class="flex cursor-not-allowed items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-ink-subtle">
+    <c-icon :name="icon" />
+    {{ label }}
+    <span class="ml-auto rounded-sm border border-line px-1.5 text-xs">Soon</span>
+  </span>
+{% endif %}

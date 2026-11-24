@@ -18,6 +18,10 @@
 
   {# mt-auto pushes this list to the bottom of the sidebar #}
   <ul class="mt-auto space-y-0.5 pt-4">
+    {% if show_dev_tools %}
+      {# Development only (DEBUG on): the component gallery. #}
+      <li>{% include "partials/nav_item.html" with label="UI kit" icon="palette" url_name="core:ui" %}</li>
+    {% endif %}
     <li>{% include "partials/nav_item.html" with label="Settings" icon="settings" %}</li>
   </ul>
 </nav>

@@ -1,0 +1,17 @@
+{% comment %}
+Small status label.
+Usage: <c-badge tone="success">Offer</c-badge>   <c-badge tone="info" dot>Applied</c-badge>
+tone: neutral | accent | success | warning | danger | info    dot: show a coloured dot
+{% endcomment %}
+<c-vars tone="neutral" dot=False class="" />
+<span class="inline-flex items-center gap-1.5 rounded-sm px-1.5 py-0.5 text-xs font-medium
+  {% if tone == "accent" %}bg-accent-soft text-accent
+  {% elif tone == "success" %}bg-success-soft text-success
+  {% elif tone == "warning" %}bg-warning-soft text-warning
+  {% elif tone == "danger" %}bg-danger-soft text-danger
+  {% elif tone == "info" %}bg-info-soft text-info
+  {% else %}bg-surface-muted text-ink-muted{% endif %}
+  {{ class }}" {{ attrs }}>
+  {% if dot %}<span class="size-1.5 rounded-full bg-current" aria-hidden="true"></span>{% endif %}
+  {{ slot }}
+</span>

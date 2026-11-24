@@ -1,0 +1,20 @@
+{% comment %}
+Button, or a link that looks like a button (when href is given).
+Usage:
+  <c-button>Save</c-button>
+  <c-button variant="secondary" size="sm" href="/somewhere/">Cancel</c-button>
+  <c-button type="submit" variant="danger">Delete</c-button>
+variant: primary | secondary | ghost | danger    size: sm | md
+Other attributes (hx-post, @click, disabled, ...) are passed through via {{ attrs }}.
+{% endcomment %}
+<c-vars variant="primary" size="md" type="button" href="" class="" />
+{# Same classes for both tags: only the tag name switches between <a> and <button>. #}
+<{% if href %}a href="{{ href }}"{% else %}button type="{{ type }}"{% endif %}
+  class="inline-flex items-center justify-center gap-2 rounded-md font-medium whitespace-nowrap transition-colors disabled:pointer-events-none disabled:opacity-50
+    {% if size == "sm" %}h-8 px-3 text-sm{% else %}h-9 px-4 text-sm{% endif %}
+    {% if variant == "secondary" %}border border-line-strong bg-surface text-ink hover:bg-surface-muted
+    {% elif variant == "ghost" %}text-ink-muted hover:bg-surface-muted hover:text-ink
+    {% elif variant == "danger" %}border border-line-strong bg-surface text-danger hover:bg-danger-soft
+    {% else %}bg-accent text-on-accent hover:bg-accent-hover{% endif %}
+    {{ class }}"
+  {{ attrs }}>{{ slot }}</{% if href %}a{% else %}button{% endif %}>

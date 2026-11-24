@@ -1,0 +1,22 @@
+{% comment %}
+Bordered panel with an optional header.
+Usage:
+  <c-card title="Recent applications" description="Last 30 days">
+    <c-slot name="actions"><c-button size="sm" variant="secondary">View all</c-button></c-slot>
+    ...content...
+  </c-card>
+flush: no padding around the content (for tables that should touch the card edges).
+{% endcomment %}
+<c-vars title="" description="" flush=False class="" />
+<section class="overflow-hidden rounded-lg border border-line bg-surface {{ class }}" {{ attrs }}>
+  {% if title %}
+    <header class="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+      <div>
+        <h2 class="font-semibold tracking-tight">{{ title }}</h2>
+        {% if description %}<p class="mt-0.5 text-sm text-ink-muted">{{ description }}</p>{% endif %}
+      </div>
+      {% if actions %}<div class="flex shrink-0 items-center gap-2">{{ actions }}</div>{% endif %}
+    </header>
+  {% endif %}
+  <div class="{% if not flush %}px-5 py-4{% endif %}">{{ slot }}</div>
+</section>

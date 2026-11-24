@@ -1,0 +1,27 @@
+{% comment %}
+Modal dialog built on the native <dialog> element. The browser provides focus handling,
+closing with Escape and the backdrop, so no JavaScript library is needed.
+Open:  <c-button @click="document.getElementById('confirm-delete').showModal()">Delete</c-button>
+Close: any button inside <form method="dialog"> closes it (no JavaScript at all).
+Usage:
+  <c-modal id="confirm-delete" title="Delete application?">
+    This cannot be undone.
+    <c-slot name="footer">...buttons...</c-slot>
+  </c-modal>
+Without a footer slot, a "Close" button is shown.
+{% endcomment %}
+<c-vars id title />
+<dialog id="{{ id }}" aria-labelledby="{{ id }}-title"
+        class="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-line bg-surface p-0 text-ink shadow-popover backdrop:bg-overlay">
+  <div class="px-5 pt-5">
+    <h2 id="{{ id }}-title" class="font-semibold tracking-tight">{{ title }}</h2>
+    <div class="mt-2 text-sm text-ink-muted">{{ slot }}</div>
+  </div>
+  <form method="dialog" class="mt-5 flex justify-end gap-2 border-t border-line bg-canvas px-5 py-3">
+    {% if footer %}
+      {{ footer }}
+    {% else %}
+      <c-button type="submit" variant="secondary">Close</c-button>
+    {% endif %}
+  </form>
+</dialog>

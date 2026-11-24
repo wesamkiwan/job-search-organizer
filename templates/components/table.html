@@ -1,0 +1,16 @@
+{% comment %}
+Data table. Write normal <thead>/<tbody>/<tr>/<th>/<td> inside; the styles are applied here.
+Usage: <c-card flush><c-table><thead>...</thead><tbody>...</tbody></c-table></c-card>
+[&_th]:... is a Tailwind arbitrary variant: "style every <th> inside this table".
+tabular-nums: all digits have the same width, so numbers line up in columns.
+{% endcomment %}
+<c-vars class="" />
+<div class="overflow-x-auto">
+  <table class="w-full text-left text-sm tabular-nums
+    [&_th]:px-5 [&_th]:py-2.5 [&_th]:text-xs [&_th]:font-medium [&_th]:text-ink-muted
+    [&_td]:px-5 [&_td]:py-3
+    [&_thead]:bg-canvas [&_tbody_tr]:border-t [&_tbody_tr]:border-line [&_tbody_tr:hover]:bg-surface-muted
+    {{ class }}" {{ attrs }}>
+    {{ slot }}
+  </table>
+</div>

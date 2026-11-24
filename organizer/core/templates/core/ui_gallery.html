@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}UI kit · Job Search Organizer{% endblock title %}
+
+{% block page_title %}UI kit{% endblock page_title %}
+
+{% block content %}
+  <div class="space-y-10">
+    <p class="max-w-prose text-sm text-ink-muted">
+      Every component of the design system on one page. Check it in light and dark mode
+      after changing tokens (<code class="font-mono text-ink">assets/css/source.css</code>)
+      or components (<code class="font-mono text-ink">templates/components/</code>).
+      Development only.
+    </p>
+
+    {# --- Colours --- #}
+    <section aria-labelledby="colours">
+      <h2 id="colours" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Colour tokens</h2>
+      <ul class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        {% for name, css_class in color_tokens %}
+          <li>
+            <div class="h-12 rounded-md border border-line {{ css_class }}"></div>
+            <p class="mt-1.5 font-mono text-xs text-ink-muted">{{ name }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    {# --- Typography --- #}
+    <section aria-labelledby="type">
+      <h2 id="type" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Typography</h2>
+      <div class="mt-3 space-y-2">
+        <p class="text-2xl font-semibold tracking-tight">Page heading, IBM Plex Sans semibold</p>
+        <p class="font-semibold tracking-tight">Section heading</p>
+        <p class="text-sm">Body text: a calm, readable sans-serif for long working sessions.</p>
+        <p class="text-sm text-ink-muted">Secondary text for labels and descriptions.</p>
+        <p class="text-sm text-ink-subtle">Subtle text for hints and timestamps.</p>
+        <p class="font-mono text-sm tabular-nums">IBM Plex Mono · 1.234,56 € · 18.11.2026</p>
+      </div>
+    </section>
+
+    {# --- Buttons --- #}
+    <section aria-labelledby="buttons">
+      <h2 id="buttons" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Buttons</h2>
+      <div class="mt-3 flex flex-wrap items-center gap-3">
+        <c-button>Primary</c-button>
+        <c-button variant="secondary">Secondary</c-button>
+        <c-button variant="ghost">Ghost</c-button>
+        <c-button variant="danger">Danger</c-button>
+        <c-button disabled>Disabled</c-button>
+        <c-button size="sm">Small</c-button>
+        <c-button variant="secondary" size="sm" href="{% url 'core:home' %}">Link as button</c-button>
+        <c-button><c-icon name="briefcase-business" /> With icon</c-button>
+      </div>
+    </section>
+
+    {# --- Badges --- #}
+    <section aria-labelledby="badges">
+      <h2 id="badges" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Badges</h2>
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <c-badge>Draft</c-badge>
+        <c-badge tone="info" dot>Applied</c-badge>
+        <c-badge tone="accent" dot>Interview</c-badge>
+        <c-badge tone="success" dot>Offer</c-badge>
+        <c-badge tone="warning" dot>On hold</c-badge>
+        <c-badge tone="danger" dot>Rejected</c-badge>
+      </div>
+    </section>
+
+    {# --- Card + table --- #}
+    <section aria-labelledby="cards">
+      <h2 id="cards" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Card and table</h2>
+      <div class="mt-3 grid gap-6 lg:grid-cols-3">
+        <c-card title="Card" description="Optional description" class="lg:col-span-1">
+          <p class="text-sm text-ink-muted">Cards group related content with a hairline border instead of a shadow.</p>
+        </c-card>
+
+        <c-card title="Recent applications" description="Made-up example data" flush class="lg:col-span-2">
+          <c-slot name="actions">
+            <c-button variant="secondary" size="sm">View all</c-button>
+          </c-slot>
+          <c-table>
+            <thead>
+              <tr><th scope="col">Company</th><th scope="col">Role</th><th scope="col">City</th><th scope="col">Applied</th><th scope="col">Status</th></tr>
+            </thead>
+            <tbody>
+              {% for app in applications %}
+                <tr>
+                  <td class="font-medium">{{ app.company }}</td>
+                  <td class="text-ink-muted">{{ app.role }}</td>
+                  <td class="text-ink-muted">{{ app.city }}</td>
+                  <td class="font-mono text-xs text-ink-muted">{{ app.applied }}</td>
+                  <td><c-badge :tone="app.tone" dot>{{ app.status }}</c-badge></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </c-table>
+        </c-card>
+      </div>
+    </section>
+
+    {# --- Form fields --- #}
+    <section aria-labelledby="forms">
+      <h2 id="forms" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Form fields</h2>
+      <div class="mt-3 grid max-w-3xl gap-5 sm:grid-cols-2">
+        <c-field label="Company" name="demo_company" required placeholder="e.g. Nordlicht Software GmbH" />
+        <c-field label="Job title" name="demo_title" help="As written in the job ad." />
+        <c-field label="Email" name="demo_email" type="email" value="not-an-email" error="Enter a valid email address." />
+        <c-field label="Applied on" name="demo_date" type="date" />
+      </div>
+    </section>
+
+    {# --- Modal --- #}
+    <section aria-labelledby="modal">
+      <h2 id="modal" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Modal</h2>
+      <div class="mt-3">
+        <c-button variant="danger" @click="document.getElementById('demo-modal').showModal()">Delete application…</c-button>
+      </div>
+      <c-modal id="demo-modal" title="Delete this application?">
+        The application and its timeline will be removed. This cannot be undone.
+        <c-slot name="footer">
+          <c-button type="submit" variant="secondary">Cancel</c-button>
+          <c-button type="submit" variant="danger">Delete</c-button>
+        </c-slot>
+      </c-modal>
+    </section>
+
+    {# --- Empty state --- #}
+    <section aria-labelledby="empty">
+      <h2 id="empty" class="text-xs font-medium tracking-wide text-ink-subtle uppercase">Empty state</h2>
+      <div class="mt-3 max-w-3xl">
+        <c-empty-state icon="briefcase-business" title="No applications yet"
+                       description="Add your first application to start tracking it.">
+          <c-button>Add application</c-button>
+        </c-empty-state>
+      </div>
+    </section>
+  </div>
+{% endblock content %}

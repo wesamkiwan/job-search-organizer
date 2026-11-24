@@ -29,6 +29,9 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 THIRD_PARTY_APPS = [
+    # SimpleAppConfig: cotton does NOT rewrite TEMPLATES behind our back;
+    # its loader and tags are configured explicitly in TEMPLATES below.
+    "django_cotton.apps.SimpleAppConfig",
     "django_tailwind_cli",
 ]
 LOCAL_APPS = [
@@ -58,16 +61,41 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
-        "APP_DIRS": True,
+        # No APP_DIRS: it can't be combined with an explicit "loaders" list. The
+        # app_directories loader below does the same job (finds app/templates/ folders).
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "organizer.core.context_processors.dev_tools",
             ],
+            # Loaders are tried in order. The cotton loader first compiles <c-...> component
+            # tags into normal Django template tags. The cached loader keeps compiled
+            # templates in memory (in development it reloads them when a file changes).
+            "loaders": [
+                (
+                    "django.template.loaders.cached.Loader",
+                    [
+                        "django_cotton.cotton_loader.Loader",
+                        "django.template.loaders.filesystem.Loader",
+                        "django.template.loaders.app_directories.Loader",
+                    ],
+                ),
+            ],
+            # Built-ins are available in every template without {% load %}.
+            "builtins": ["django_cotton.templatetags.cotton"],
         },
     },
 ]
+
+# --- Components (django-cotton) -----------------------------------------------------
+# <c-button> renders templates/components/button.html.
+COTTON_DIR = "components"
+# Components only see the attributes passed to them (plus request/user from context
+# processors), not every variable of the page that uses them. Like function arguments:
+# explicit inputs, no hidden dependencies.
+COTTON_ISOLATE_BY_DEFAULT = True
 
 
 # --- Database -----------------------------------------------------------------------

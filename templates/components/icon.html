@@ -1,0 +1,6 @@
+{% comment %}
+Icon from templates/icons/.
+Usage: <c-icon name="moon" />  or  <c-icon name="moon" class="size-5" />
+{% endcomment %}
+<c-vars name class="size-4 shrink-0" />
+{% include "icons/"|add:name|add:".html" with icon_class=class %}

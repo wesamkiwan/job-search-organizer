@@ -1,0 +1,28 @@
+{% comment %}
+Labelled text input with help text or an error message.
+Usage: <c-field label="Company" name="company" required help="As written in the job ad" />
+       <c-field label="Email" name="email" type="email" error="Enter a valid email address." />
+Other attributes (placeholder, autocomplete, ...) go onto the <input> via {{ attrs }}.
+Accessibility: the label is linked with for/id, the hint with aria-describedby, and an
+error sets aria-invalid so screen readers announce it.
+(Later, Django form fields will be rendered with this same look.)
+{% endcomment %}
+<c-vars label name type="text" value="" help="" error="" required=False />
+{% with field_id="id_"|add:name %}
+  <div>
+    <label for="{{ field_id }}" class="block text-sm font-medium">
+      {{ label }}{% if required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+    <input id="{{ field_id }}" name="{{ name }}" type="{{ type }}" value="{{ value }}"
+           {% if required %}required{% endif %}
+           {% if error %}aria-invalid="true"{% endif %}
+           {% if help or error %}aria-describedby="{{ field_id }}_hint"{% endif %}
+           class="mt-1.5 block h-9 w-full rounded-md border border-line-input bg-surface px-3 text-sm text-ink placeholder:text-ink-subtle focus-visible:border-accent focus-visible:outline-1 focus-visible:outline-offset-0 aria-invalid:border-danger"
+           {{ attrs }}>
+    {% if error %}
+      <p id="{{ field_id }}_hint" class="mt-1.5 text-sm text-danger">{{ error }}</p>
+    {% elif help %}
+      <p id="{{ field_id }}_hint" class="mt-1.5 text-sm text-ink-subtle">{{ help }}</p>
+    {% endif %}
+  </div>
+{% endwith %}

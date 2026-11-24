@@ -44,7 +44,7 @@
                 aria-expanded="false" :aria-expanded="sidebarOpen.toString()"
                 class="-ml-2 inline-flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted hover:text-ink lg:hidden">
           <span class="sr-only">Open navigation</span>
-          {% include "icons/menu.html" %}
+          <c-icon name="menu" />
         </button>
 
         <h1 class="text-base font-semibold tracking-tight">{% block page_title %}{% endblock page_title %}</h1>
@@ -54,8 +54,8 @@
                   class="inline-flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted hover:text-ink">
             <span class="sr-only">Dark mode</span>
             {# Moon shows in light mode, sun in dark mode. #}
-            {% include "icons/moon.html" with icon_class="size-4 dark:hidden" %}
-            {% include "icons/sun.html" with icon_class="hidden size-4 dark:block" %}
+            <c-icon name="moon" class="size-4 dark:hidden" />
+            <c-icon name="sun" class="hidden size-4 dark:block" />
           </button>
         </div>
       </header>

@@ -24,7 +24,7 @@ Two versions of the sidebar, sharing the same content (sidebar_nav.html):
     <button type="button" @click="sidebarOpen = false"
             class="absolute top-2.5 right-2.5 inline-flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted hover:text-ink">
       <span class="sr-only">Close navigation</span>
-      {% include "icons/x.html" %}
+      <c-icon name="x" />
     </button>
     {% include "partials/sidebar_nav.html" %}
   </div>
