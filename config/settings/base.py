@@ -36,6 +36,7 @@ THIRD_PARTY_APPS = [
 ]
 LOCAL_APPS = [
     "organizer.core",
+    "organizer.accounts",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -113,6 +114,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # --- Authentication -----------------------------------------------------------------
+
+# Our own user model (organizer/accounts/models.py) instead of django.contrib.auth's.
+# Must be set before the first migration; code refers to it via get_user_model() or
+# settings.AUTH_USER_MODEL, never by importing django.contrib.auth.models.User.
+AUTH_USER_MODEL = "accounts.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
