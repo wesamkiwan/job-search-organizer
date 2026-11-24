@@ -1,0 +1,51 @@
+{% extends "base_shell.html" %}
+{% comment %}
+Login page, rendered by Django's LoginView. Context it provides:
+  form: AuthenticationForm (fields "username" and "password")
+  next: the page to go to after logging in (from ?next=...)
+No sidebar: it extends the bare shell, not base.html.
+{% endcomment %}
+
+{% block title %}Sign in · Job Search Organizer{% endblock title %}
+
+{% block body %}
+  <div class="flex min-h-screen flex-col">
+    <div class="flex justify-end p-3">
+      {% include "partials/theme_toggle.html" %}
+    </div>
+
+    <main class="flex flex-1 items-start justify-center px-4 pt-[12vh] pb-16">
+      <div class="w-full max-w-sm">
+        <div class="flex flex-col items-center text-center">
+          <span aria-hidden="true"
+                class="grid size-10 place-items-center rounded-md bg-accent font-mono text-sm font-medium text-on-accent">JS</span>
+          <h1 class="mt-4 text-xl font-semibold tracking-tight">Sign in</h1>
+          <p class="mt-1 text-sm text-ink-muted">to your Job Search Organizer</p>
+        </div>
+
+        <c-card class="mt-8">
+          <form method="post" action="{% url 'accounts:login' %}" class="space-y-5" novalidate>
+            {% csrf_token %}
+            {# Send the user back to the page they originally wanted. #}
+            <input type="hidden" name="next" value="{{ next }}">
+
+            {% if form.non_field_errors %}
+              <c-alert tone="danger">{{ form.non_field_errors.0 }}</c-alert>
+            {% endif %}
+
+            <c-field label="Username" name="username"
+                     value="{{ form.username.value|default_if_none:'' }}"
+                     error="{{ form.username.errors.0|default:'' }}"
+                     autocomplete="username" autocapitalize="none" autofocus required />
+            {# The password is never sent back into the page, so no value here. #}
+            <c-field label="Password" name="password" type="password"
+                     error="{{ form.password.errors.0|default:'' }}"
+                     autocomplete="current-password" required />
+
+            <c-button type="submit" class="w-full">Sign in</c-button>
+          </form>
+        </c-card>
+      </div>
+    </main>
+  </div>
+{% endblock body %}
