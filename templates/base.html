@@ -17,22 +17,52 @@
       })();
     </script>
     {% tailwind_css %}
+    {# defer: download in parallel, run after the HTML is parsed (doesn't block the page). #}
     <script src="{% static 'js/theme.js' %}" defer></script>
+    <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
+    <script src="{% static 'vendor/alpinejs/alpine.min.js' %}" defer></script>
   </head>
-  <body class="min-h-screen antialiased">
-    <header class="border-b border-line bg-surface">
-      <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-3">
-        <a href="{% url 'core:home' %}" class="font-semibold tracking-tight">Job Search Organizer</a>
+  {# x-data: Alpine state for the whole page (is the mobile menu open?). #}
+  {# hx-headers: every HTMX request sends the CSRF token, so Django accepts POSTs. #}
+  <body class="min-h-screen antialiased"
+        x-data="{ sidebarOpen: false }"
+        @keydown.escape.window="sidebarOpen = false"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {# Keyboard users can jump past the navigation. Invisible until focused with Tab. #}
+    <a href="#main"
+       class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-sm focus:shadow-popover">
+      Skip to content
+    </a>
 
-        <button type="button" data-theme-toggle aria-pressed="false"
-                class="inline-flex size-9 items-center justify-center rounded-md border border-line text-ink-muted hover:bg-surface-muted hover:text-ink">
-          <span class="sr-only">Dark mode</span>
-          {# Icons: Feather Icons (MIT). Moon shows in light mode, sun in dark mode. #}
-          <svg class="size-4 dark:hidden" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-          <svg class="hidden size-4 dark:block" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    {% include "partials/sidebar.html" %}
+
+    {# lg:pl-60 makes room for the fixed desktop sidebar (w-60). #}
+    <div class="lg:pl-60">
+      {# Top bar. Not an include, because {% block %} only works in the extends chain. #}
+      <header class="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-canvas px-4 sm:px-6 lg:px-8">
+        <button type="button" @click="sidebarOpen = true"
+                aria-expanded="false" :aria-expanded="sidebarOpen.toString()"
+                class="-ml-2 inline-flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted hover:text-ink lg:hidden">
+          <span class="sr-only">Open navigation</span>
+          {% include "icons/menu.html" %}
         </button>
-      </div>
-    </header>
-    {% block content %}{% endblock content %}
+
+        <h1 class="text-base font-semibold tracking-tight">{% block page_title %}{% endblock page_title %}</h1>
+
+        <div class="ml-auto flex items-center gap-1">
+          <button type="button" data-theme-toggle aria-pressed="false"
+                  class="inline-flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted hover:text-ink">
+            <span class="sr-only">Dark mode</span>
+            {# Moon shows in light mode, sun in dark mode. #}
+            {% include "icons/moon.html" with icon_class="size-4 dark:hidden" %}
+            {% include "icons/sun.html" with icon_class="hidden size-4 dark:block" %}
+          </button>
+        </div>
+      </header>
+
+      <main id="main" class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {% block content %}{% endblock content %}
+      </main>
+    </div>
   </body>
 </html>

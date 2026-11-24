@@ -1,13 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Home · Job Search Organizer{% endblock title %}
+{% block title %}Dashboard · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Dashboard{% endblock page_title %}
 
 {% block content %}
-  <main class="mx-auto max-w-3xl px-6 py-16">
-    <h1 class="text-3xl font-bold tracking-tight">Job Search Organizer</h1>
-    <p class="mt-4 text-ink-muted">
+  <section class="rounded-lg border border-line bg-surface p-6">
+    <h2 class="font-semibold tracking-tight">Welcome to your job search organizer</h2>
+    <p class="mt-1 max-w-prose text-sm text-ink-muted">
       Track your applications from StepStone, LinkedIn and more, all in one place.
+      Applications, companies and analytics will appear here as they are built.
     </p>
-    <a href="{% url 'core:home' %}" class="mt-6 inline-block text-accent hover:text-accent-hover hover:underline">Back to home</a>
-  </main>
+  </section>
 {% endblock content %}

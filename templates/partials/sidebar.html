@@ -1,0 +1,36 @@
+{% comment %}
+Two versions of the sidebar, sharing the same content (sidebar_nav.html):
+  - mobile (< lg): hidden panel that slides in. Opened/closed with the Alpine variable
+    "sidebarOpen", which lives on <body> in base.html.
+  - desktop (lg and up): always visible, fixed on the left.
+{% endcomment %}
+
+{# --- Mobile panel --- #}
+<div class="lg:hidden">
+  {# Dark backdrop; clicking it closes the panel. #}
+  <div x-cloak x-show="sidebarOpen" x-transition.opacity
+       @click="sidebarOpen = false"
+       class="fixed inset-0 z-40 bg-overlay"></div>
+
+  <div x-cloak x-show="sidebarOpen"
+       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter-start="-translate-x-full"
+       x-transition:enter-end="translate-x-0"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="translate-x-0"
+       x-transition:leave-end="-translate-x-full"
+       role="dialog" aria-modal="true" aria-label="Navigation"
+       class="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-line bg-canvas">
+    <button type="button" @click="sidebarOpen = false"
+            class="absolute top-2.5 right-2.5 inline-flex size-9 items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted hover:text-ink">
+      <span class="sr-only">Close navigation</span>
+      {% include "icons/x.html" %}
+    </button>
+    {% include "partials/sidebar_nav.html" %}
+  </div>
+</div>
+
+{# --- Desktop sidebar --- #}
+<aside class="hidden border-r border-line bg-canvas lg:fixed lg:inset-y-0 lg:flex lg:w-60 lg:flex-col">
+  {% include "partials/sidebar_nav.html" %}
+</aside>

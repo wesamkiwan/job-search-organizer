@@ -1,4 +1,8 @@
 # Runs automatically on `git commit`. Run on everything manually: uv run pre-commit run --all-files
+
+# Third-party files are kept exactly as published, so no hook may modify them.
+exclude: ^static/vendor/
+
 repos:
   # --- Generic file hygiene checks ---------------------------------------------------
   - repo: https://github.com/pre-commit/pre-commit-hooks
