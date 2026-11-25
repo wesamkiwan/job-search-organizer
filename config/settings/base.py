@@ -8,6 +8,7 @@ secrets are read from environment variables / the .env file, never hard-coded.
 from pathlib import Path
 
 import environ
+from django.contrib.messages import constants as messages
 
 # Project root: the folder that contains manage.py
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -127,6 +128,9 @@ AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "accounts:login"  # not logged in -> here (with ?next=<page they wanted>)
 LOGIN_REDIRECT_URL = "core:home"  # after logging in, if there is no ?next=
 LOGOUT_REDIRECT_URL = "accounts:login"  # after logging out
+
+# Messages framework: Django's "error" level is called "danger" in our alert component.
+MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

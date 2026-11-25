@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% comment %}
+Settings page. Context:
+  form:  UserSettingsForm (labels, help texts and choices come from the model)
+  today: today's date, to preview the date format
+{% endcomment %}
+
+{% block title %}Settings · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Settings{% endblock page_title %}
+
+{% block content %}
+  <form method="post" action="{% url 'core:settings' %}" class="max-w-2xl" novalidate>
+    {% csrf_token %}
+
+    <c-card title="Preferences" description="Defaults used across the app.">
+      <div class="space-y-5">
+        {% if form.non_field_errors %}
+          <c-alert tone="danger">{{ form.non_field_errors.0 }}</c-alert>
+        {% endif %}
+
+        <c-field label="{{ form.home_location.label }}" name="home_location"
+                 value="{{ form.home_location.value|default_if_none:'' }}"
+                 help="{{ form.home_location.help_text }}"
+                 error="{{ form.home_location.errors.0|default:'' }}"
+                 placeholder="e.g. Berlin or 10115" maxlength="200" />
+
+        <c-select label="{{ form.default_currency.label }}" name="default_currency"
+                  :options="form.default_currency.field.choices"
+                  value="{{ form.default_currency.value }}"
+                  help="{{ form.default_currency.help_text }}"
+                  error="{{ form.default_currency.errors.0|default:'' }}" required />
+
+        <c-field label="{{ form.ghosted_after_days.label }}" name="ghosted_after_days" type="number"
+                 value="{{ form.ghosted_after_days.value|default_if_none:'' }}"
+                 help="{{ form.ghosted_after_days.help_text }}"
+                 error="{{ form.ghosted_after_days.errors.0|default:'' }}"
+                 min="1" max="365" inputmode="numeric" required />
+
+        {# The preview shows today's date in the saved format. #}
+        <c-select label="{{ form.date_format.label }}" name="date_format"
+                  :options="form.date_format.field.choices"
+                  value="{{ form.date_format.value }}"
+                  help="Today is shown as {{ today|date:form.instance.date_format }}."
+                  error="{{ form.date_format.errors.0|default:'' }}" required />
+      </div>
+    </c-card>
+
+    <div class="mt-4 flex justify-end">
+      <c-button type="submit">Save settings</c-button>
+    </div>
+  </form>
+{% endblock content %}

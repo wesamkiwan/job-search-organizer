@@ -1,0 +1,34 @@
+{% comment %}
+Labelled dropdown, the <select> sibling of <c-field> (same label, help and error look).
+Usage: <c-select label="Currency" name="currency" :options="choices" value="EUR" />
+  options: list of (value, label) pairs, e.g. a Django form field's .field.choices
+  value:   the selected value
+Other attributes go onto the <select> via {{ attrs }}.
+{% endcomment %}
+<c-vars label name options value="" help="" error="" required=False />
+{% with field_id="id_"|add:name %}
+  <div>
+    <label for="{{ field_id }}" class="block text-sm font-medium">
+      {{ label }}{% if required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+    {# appearance-none hides the browser's own arrow, so it looks the same everywhere; ours is the icon. #}
+    <div class="relative mt-1.5">
+      <select id="{{ field_id }}" name="{{ name }}"
+              {% if required %}required{% endif %}
+              {% if error %}aria-invalid="true"{% endif %}
+              {% if help or error %}aria-describedby="{{ field_id }}_hint"{% endif %}
+              class="block h-9 w-full appearance-none rounded-md border border-line-input bg-surface pr-9 pl-3 text-sm text-ink focus-visible:border-accent focus-visible:outline-1 focus-visible:outline-offset-0 aria-invalid:border-danger"
+              {{ attrs }}>
+        {% for option_value, option_label in options %}
+          <option value="{{ option_value }}" {% if option_value|stringformat:"s" == value|stringformat:"s" %}selected{% endif %}>{{ option_label }}</option>
+        {% endfor %}
+      </select>
+      <c-icon name="chevron-down" class="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-ink-subtle" />
+    </div>
+    {% if error %}
+      <p id="{{ field_id }}_hint" class="mt-1.5 text-sm text-danger">{{ error }}</p>
+    {% elif help %}
+      <p id="{{ field_id }}_hint" class="mt-1.5 text-sm text-ink-subtle">{{ help }}</p>
+    {% endif %}
+  </div>
+{% endwith %}

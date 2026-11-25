@@ -34,6 +34,14 @@ The app layout: sidebar + top bar + main content. Pages extend this and fill
       </header>
 
       <main id="main" class="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {# One-time messages from the messages framework, e.g. "Settings saved." after a redirect. #}
+        {% if messages %}
+          <div class="mb-6 max-w-2xl space-y-2">
+            {% for message in messages %}
+              <c-alert tone="{{ message.level_tag }}">{{ message }}</c-alert>
+            {% endfor %}
+          </div>
+        {% endif %}
         {% block content %}{% endblock content %}
       </main>
     </div>
