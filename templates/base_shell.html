@@ -1,0 +1,34 @@
+{% load static tailwind_cli %}
+{% comment %}
+The bare HTML page that every page shares: <head> (theme, CSS, scripts) and <body>.
+  - base.html extends it and adds the app layout (sidebar, top bar).
+  - Pages without the layout (e.g. the login page) extend it directly.
+{% endcomment %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Job Search Organizer{% endblock title %}</title>
+    {# Set the theme before anything is drawn (prevents a white flash in dark mode). #}
+    <script>
+      (function () {
+        let theme = null;
+        try { theme = localStorage.getItem("theme"); } catch {}
+        if (theme !== "light" && theme !== "dark") {
+          theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+    {% tailwind_css %}
+    {# defer: download in parallel, run after the HTML is parsed (doesn't block the page). #}
+    <script src="{% static 'js/theme.js' %}" defer></script>
+    <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
+    <script src="{% static 'vendor/alpinejs/alpine.min.js' %}" defer></script>
+  </head>
+  {# hx-headers: every HTMX request sends the CSRF token, so Django accepts POSTs. #}
+  <body class="min-h-screen antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {% block body %}{% endblock body %}
+  </body>
+</html>

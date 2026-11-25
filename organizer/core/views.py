@@ -1,6 +1,11 @@
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404, HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from .forms import UserSettingsForm
+from .models import UserSettings
 
 # Design tokens shown as colour swatches in the UI gallery: (token name, Tailwind class).
 # Full class names are written out so Tailwind finds them when it scans this file.
@@ -52,3 +57,22 @@ def ui_gallery(request: HttpRequest) -> HttpResponse:
         raise Http404
     context = {"color_tokens": COLOR_TOKENS, "applications": SAMPLE_APPLICATIONS}
     return render(request, "core/ui_gallery.html", context)
+
+
+def user_settings(request: HttpRequest) -> HttpResponse:
+    """Show and save the app settings.
+
+    Follows Post/Redirect/Get: after a successful save we redirect instead of rendering,
+    so reloading the page doesn't submit the form a second time.
+    """
+    instance = UserSettings.load()
+    if request.method == "POST":
+        form = UserSettingsForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Settings saved.")
+            return redirect("core:settings")
+    else:
+        form = UserSettingsForm(instance=instance)
+    context = {"form": form, "today": timezone.localdate()}
+    return render(request, "core/settings.html", context)

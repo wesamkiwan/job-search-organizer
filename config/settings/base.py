@@ -8,6 +8,7 @@ secrets are read from environment variables / the .env file, never hard-coded.
 from pathlib import Path
 
 import environ
+from django.contrib.messages import constants as messages
 
 # Project root: the folder that contains manage.py
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -36,6 +37,7 @@ THIRD_PARTY_APPS = [
 ]
 LOCAL_APPS = [
     "organizer.core",
+    "organizer.accounts",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -49,6 +51,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Every page requires login unless its view is marked @login_not_required
+    # ("secure by default": a new page can't be public by accident). Needs Django 5.1+.
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -113,6 +118,19 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # --- Authentication -----------------------------------------------------------------
+
+# Our own user model (organizer/accounts/models.py) instead of django.contrib.auth's.
+# Must be set before the first migration; code refers to it via get_user_model() or
+# settings.AUTH_USER_MODEL, never by importing django.contrib.auth.models.User.
+AUTH_USER_MODEL = "accounts.User"
+
+# Where to send people: URL names, resolved by Django like {% url %}.
+LOGIN_URL = "accounts:login"  # not logged in -> here (with ?next=<page they wanted>)
+LOGIN_REDIRECT_URL = "core:home"  # after logging in, if there is no ?next=
+LOGOUT_REDIRECT_URL = "accounts:login"  # after logging out
+
+# Messages framework: Django's "error" level is called "danger" in our alert component.
+MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
