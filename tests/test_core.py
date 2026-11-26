@@ -116,3 +116,30 @@ def test_user_settings_is_a_singleton() -> None:
     UserSettings(ghosted_after_days=14).save()  # a "new" object updates row 1
     assert UserSettings.objects.count() == 1
     assert UserSettings.load().ghosted_after_days == 14
+
+
+# --- TimeStampedModel ------------------------------------------------------------------
+# UserSettings is our first model built on TimeStampedModel, so we test the base class
+# through it. Every later model inherits the same behaviour.
+
+
+# Saving for the first time fills both timestamps (on the same save they are equal).
+@pytest.mark.django_db
+def test_timestamps_are_set_on_create() -> None:
+    user_settings = UserSettings.load()
+    assert user_settings.created_at is not None
+    assert user_settings.updated_at is not None
+
+
+# A later save moves updated_at forward, but created_at stays as it was.
+@pytest.mark.django_db
+def test_updated_at_changes_on_save_but_created_at_does_not() -> None:
+    user_settings = UserSettings.load()
+    created, first_update = user_settings.created_at, user_settings.updated_at
+
+    user_settings.ghosted_after_days = 14
+    user_settings.save()
+    user_settings.refresh_from_db()  # read the row again from the database
+
+    assert user_settings.created_at == created
+    assert user_settings.updated_at > first_update

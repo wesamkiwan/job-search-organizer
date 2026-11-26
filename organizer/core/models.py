@@ -6,6 +6,22 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
+class TimeStampedModel(models.Model):
+    """Base class that adds "when was this created / last changed" to a model.
+
+    abstract = True: Django creates NO table for this class. Every model that inherits
+    from it gets the two columns in its own table instead. Write them once, use everywhere.
+    """
+
+    # auto_now_add: set once, when the row is first saved (INSERT). Never changes after.
+    created_at = models.DateTimeField(auto_now_add=True)
+    # auto_now: set again on every save() (INSERT and UPDATE).
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
 class Currency(models.TextChoices):
     EUR = "EUR", "Euro (EUR)"
     CHF = "CHF", "Swiss franc (CHF)"
@@ -21,7 +37,7 @@ class DateFormat(models.TextChoices):
     BRITISH = "d/m/Y", "25/11/2026 (British)"
 
 
-class UserSettings(models.Model):
+class UserSettings(TimeStampedModel):
     """App-wide preferences. There is only ever one row (a "singleton").
 
     The app has a single user (ADR 0004), so the settings belong to the app, not to a
@@ -52,7 +68,6 @@ class UserSettings(models.Model):
         choices=DateFormat.choices,
         default=DateFormat.GERMAN,
     )
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "settings"
@@ -64,6 +79,18 @@ class UserSettings(models.Model):
     def save(self, *args: Any, **kwargs: Any) -> None:
         # Whatever happens, there is only row 1: saving a "new" object updates it.
         self.pk = self.SINGLETON_PK
+        if self._state.adding:
+            # A brand-new Python object (not loaded from the database). If row 1 already
+            # exists, Django will UPDATE it, and auto_now_add only fills created_at on an
+            # INSERT, so we would write NULL into it. Keep the row's real creation time.
+            # (If row 1 does not exist yet, this finds nothing and the INSERT fills it.)
+            existing = (
+                UserSettings.objects.filter(pk=self.SINGLETON_PK)
+                .values_list("created_at", flat=True)
+                .first()
+            )
+            if existing is not None:
+                self.created_at = existing
         super().save(*args, **kwargs)
 
     @classmethod

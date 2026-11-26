@@ -8,7 +8,7 @@ from .models import UserSettings
 class UserSettingsAdmin(admin.ModelAdmin):
     """The single settings row: it can be edited, but not added twice or deleted."""
 
-    readonly_fields = ("updated_at",)
+    readonly_fields = ("created_at", "updated_at")
 
     def has_add_permission(self, request: HttpRequest) -> bool:
         return not UserSettings.objects.exists()
