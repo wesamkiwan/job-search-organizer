@@ -4,23 +4,26 @@ from django.urls import reverse
 from pytest_django.asserts import assertContains, assertRedirects
 
 from organizer.accounts.models import User
+from tests.factories import DEFAULT_PASSWORD, UserFactory
 
 # Fixtures used here (all from pytest-django):
 #   client:            a test browser that is NOT logged in
 #   admin_client:      a test browser already logged in as a superuser
 #   admin_user:        that superuser (username "admin")
-#   django_user_model: our User model (AUTH_USER_MODEL), to create test users
 
 LOGIN_URL = reverse("accounts:login")
 LOGOUT_URL = reverse("accounts:logout")
 HOME_URL = reverse("core:home")
-PASSWORD = "correct-horse-battery-staple"
+PASSWORD = DEFAULT_PASSWORD
 
 
 @pytest.fixture
-def user(django_user_model: type[User]) -> User:
-    """A normal (non-admin) user with a known password."""
-    return django_user_model.objects.create_user(username="maria", password=PASSWORD)
+def user(db: None) -> User:
+    """A normal (non-admin) user with a known password.
+
+    Requesting the `db` fixture gives this fixture database access.
+    """
+    return UserFactory.create(username="maria")
 
 
 # --- Login page ------------------------------------------------------------------------

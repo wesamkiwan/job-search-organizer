@@ -34,7 +34,7 @@ exact documents sent, and improve the search with a dynamic analytics dashboard.
 |---|---|
 | Backend | Python 3.13, Django 5.2 LTS, SQLite (PostgreSQL later) |
 | Frontend | Server-rendered templates, HTMX, Alpine.js, Tailwind CSS v4 (no Node.js), django-cotton components |
-| Quality | pytest + pytest-django, ruff (lint + format), mypy + django-stubs, pre-commit |
+| Quality | pytest + pytest-django + factory-boy, coverage (pytest-cov), ruff (lint + format), mypy + django-stubs, pre-commit |
 | Automation | GitHub Actions CI on every pull request and push to `main` |
 | Tooling | [uv](https://docs.astral.sh/uv/) for Python, dependencies and the lockfile |
 
@@ -77,6 +77,7 @@ version, no Node.js needed).
 
 ```bash
 uv run pytest               # tests
+uv run pytest --cov         # tests + coverage report (which lines no test runs)
 uv run ruff check .         # lint
 uv run ruff format .        # format
 uv run mypy .               # type check
