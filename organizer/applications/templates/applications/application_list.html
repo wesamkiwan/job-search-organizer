@@ -55,6 +55,14 @@ How the live filtering works (HTMX):
       <c-select label="Priority" name="priority" :options="form.priority.field.choices"
                 value="{{ filters.priority }}" hide_label />
     </div>
+    <div class="sm:w-44">
+      <c-select label="Location" name="city" :options="form.city.field.choices"
+                value="{{ filters.city }}" hide_label />
+    </div>
+    <div class="sm:w-40">
+      <c-select label="Work mode" name="remote_type" :options="form.remote_type.field.choices"
+                value="{{ filters.remote_type }}" hide_label />
+    </div>
     {# Only needed without JavaScript; with HTMX the list updates by itself. #}
     <noscript><c-button type="submit" variant="secondary">Apply filters</c-button></noscript>
   </form>

@@ -10,9 +10,20 @@ from django.urls import reverse
 from django.utils import timezone
 from pytest_django.asserts import assertContains, assertNotContains, assertTemplateUsed
 
-from organizer.applications.selectors import ApplicationFilters, Status, application_list
+from organizer.applications.selectors import (
+    ApplicationFilters,
+    Status,
+    application_cities,
+    application_list,
+)
 from organizer.core.models import UserSettings
-from tests.factories import ApplicationFactory, CompanyFactory, TagFactory, stage
+from tests.factories import (
+    ApplicationFactory,
+    CompanyFactory,
+    JobPostingFactory,
+    TagFactory,
+    stage,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -66,6 +77,29 @@ def test_filter_by_status() -> None:
     assert titles(ApplicationFilters(status=Status.CLOSED)) == ["closed"]
     assert titles(ApplicationFilters(status=Status.ARCHIVED)) == ["archived"]
     assert sorted(titles(ApplicationFilters(status=Status.ALL))) == ["archived", "closed", "open"]
+
+
+# Location: exact city (ignoring case); work mode: on-site / hybrid / remote.
+def test_filter_by_city_and_remote_type() -> None:
+    ApplicationFactory.create(
+        posting__title="hh-remote", posting__city="Hamburg", posting__remote_type="remote"
+    )
+    ApplicationFactory.create(
+        posting__title="hh-onsite", posting__city="Hamburg", posting__remote_type="on_site"
+    )
+    ApplicationFactory.create(posting__title="berlin", posting__city="Berlin")
+    assert sorted(titles(ApplicationFilters(city="hamburg"))) == ["hh-onsite", "hh-remote"]
+    assert titles(ApplicationFilters(city="Hamburg", remote_type="remote")) == ["hh-remote"]
+
+
+# The Location dropdown lists each city once, A to Z, only for postings with an application.
+def test_application_cities() -> None:
+    ApplicationFactory.create(posting__city="Köln")
+    ApplicationFactory.create(posting__city="Berlin")
+    ApplicationFactory.create(posting__city="Berlin")
+    ApplicationFactory.create(posting__city="")
+    JobPostingFactory.create(city="München")  # no application → not in the list
+    assert application_cities() == ["Berlin", "Köln"]
 
 
 # --- selector: sorting -----------------------------------------------------------------
@@ -137,10 +171,22 @@ def test_list_filters_from_query_string(admin_client: Client) -> None:
     assertNotContains(response, "Data Analyst")
 
 
+# The Location dropdown offers the cities, and choosing one filters the list.
+def test_location_filter_on_page(admin_client: Client) -> None:
+    ApplicationFactory.create(posting__title="In Hamburg", posting__city="Hamburg")
+    ApplicationFactory.create(posting__title="In Berlin", posting__city="Berlin")
+    response = admin_client.get(LIST_URL, {"city": "Hamburg"})
+    assertContains(response, '<option value="Berlin"')  # still offered in the dropdown
+    assertContains(response, "In Hamburg")
+    assertNotContains(response, "In Berlin")
+
+
 # Nonsense in a hand-edited URL is ignored instead of crashing the page.
 def test_invalid_query_values_are_ignored(admin_client: Client) -> None:
     ApplicationFactory.create(posting__title="Backend Developer")
-    response = admin_client.get(LIST_URL, {"stage": "999999", "status": "nope", "page": "abc"})
+    response = admin_client.get(
+        LIST_URL, {"stage": "999999", "status": "nope", "page": "abc", "city": "Atlantis"}
+    )
     assert response.status_code == 200
     assertContains(response, "Backend Developer")
 

@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from django.db.models import F, Func, OrderBy, Prefetch, Q, QuerySet
 from django.db.models.functions import Coalesce, Lower
 
-from organizer.jobs.models import Tag
+from organizer.jobs.models import JobPosting, RemoteType, Tag
 
 from .models import Application, PipelineStage, Priority
 
@@ -50,6 +50,8 @@ class ApplicationFilters:
     stage: PipelineStage | None = None
     status: str = Status.OPEN
     priority: str = ""
+    city: str = ""
+    remote_type: str = ""
     sort: str = DEFAULT_SORT
 
 
@@ -80,9 +82,29 @@ def application_list(filters: ApplicationFilters | None = None) -> QuerySet[Appl
         applications = applications.filter(stage=filters.stage)
     if filters.priority in Priority.values:
         applications = applications.filter(priority=filters.priority)
+    if filters.city:
+        # iexact: "berlin" matches "Berlin" (exact match, ignoring upper/lower case).
+        applications = applications.filter(posting__city__iexact=filters.city)
+    if filters.remote_type in RemoteType.values:
+        applications = applications.filter(posting__remote_type=filters.remote_type)
     applications = _filter_status(applications, filters.status)
 
     return applications.order_by(*_ordering(filters.sort))
+
+
+def application_cities() -> list[str]:
+    """The cities of postings that have an application, A to Z (for the Location filter).
+
+    distinct(): every city once. The list grows by itself when you apply in a new city.
+    """
+    cities = (
+        JobPosting.objects.filter(application__isnull=False)
+        .exclude(city="")
+        .order_by("city")
+        .values_list("city", flat=True)  # just the values, not whole objects
+        .distinct()
+    )
+    return list(cities)
 
 
 def _filter_status(applications: QuerySet[Application], status: str) -> QuerySet[Application]:
