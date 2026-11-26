@@ -16,6 +16,8 @@ from factory.django import DjangoModelFactory, Password
 
 from organizer.accounts.models import User
 from organizer.companies.models import Company, Contact
+from organizer.jobs.models import JobPosting, Tag
+from organizer.sources.models import Source
 
 # The password every factory user has, so tests can log in with it.
 DEFAULT_PASSWORD = "correct-horse-battery-staple"
@@ -55,3 +57,42 @@ class ContactFactory(DjangoModelFactory[Contact]):
     last_name = factory.Faker("last_name", locale="de_DE")
     # SubFactory: also creates a company for the contact (pass company=None to skip).
     company = factory.SubFactory(CompanyFactory)
+
+
+# --- sources and jobs ------------------------------------------------------------------
+
+
+class SourceFactory(DjangoModelFactory[Source]):
+    class Meta:
+        model = Source
+        # SourceFactory.create(name="Manual") returns the default source that the data
+        # migration already created, instead of failing on the unique name.
+        django_get_or_create = ("name",)
+
+    name = factory.Sequence(lambda n: f"Source {n}")
+
+
+class TagFactory(DjangoModelFactory[Tag]):
+    class Meta:
+        model = Tag
+        django_get_or_create = ("name",)
+
+    name = factory.Sequence(lambda n: f"tag{n}")
+
+
+class JobPostingFactory(DjangoModelFactory[JobPosting]):
+    class Meta:
+        model = JobPosting
+        # Tags are added after saving (see below); don't save a second time for that.
+        skip_postgeneration_save = True
+
+    title = factory.Sequence(lambda n: f"Python Developer {n}")
+    company = factory.SubFactory(CompanyFactory)
+    source = factory.SubFactory(SourceFactory, name="Manual")
+
+    # Many-to-many values can only be added once the posting has an id (is saved), so
+    # factory-boy runs this AFTER saving:  JobPostingFactory.create(tags=[tag1, tag2])
+    @factory.post_generation
+    def tags(self, create: bool, extracted: list[Tag] | None, **kwargs: object) -> None:
+        if create and extracted:
+            self.tags.add(*extracted)
