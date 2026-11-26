@@ -4,6 +4,7 @@ from typing import Any
 
 from django.conf import settings
 from django.http import HttpRequest
+from django.utils import timezone
 from django.utils.functional import SimpleLazyObject
 
 from .models import UserSettings
@@ -21,3 +22,8 @@ def user_settings(request: HttpRequest) -> dict[str, Any]:
     user_settings (e.g. for the date format), not on every page load.
     """
     return {"user_settings": SimpleLazyObject(UserSettings.load)}
+
+
+def current_time(request: HttpRequest) -> dict[str, Any]:
+    """The current local time (Europe/Berlin, see TIME_ZONE) for the clock in the top bar."""
+    return {"current_time": timezone.localtime()}

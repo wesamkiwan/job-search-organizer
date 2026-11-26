@@ -1,0 +1,10 @@
+{% comment %}
+Current date and time in the top bar, e.g. "Fri, 27.11.2026 · 14:05".
+Rendered by Django (correct immediately); static/js/clock.js keeps it ticking.
+Uses the date format from Settings. Hidden on small screens, where the top bar is narrow.
+{% endcomment %}
+<time data-clock data-date-format="{{ user_settings.date_format }}"
+      datetime="{{ current_time|date:'c' }}"
+      class="mr-2 hidden text-sm whitespace-nowrap text-ink-muted tabular-nums sm:block">
+  {{ current_time|date:"D" }}, {{ current_time|date:user_settings.date_format }} · {{ current_time|date:"H:i" }}
+</time>

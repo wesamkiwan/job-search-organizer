@@ -1,6 +1,7 @@
 import pytest
 from django.test import Client
 from django.urls import reverse
+from django.utils import timezone
 from pytest_django import Settings
 from pytest_django.asserts import (
     assertContains,
@@ -167,3 +168,19 @@ def test_settings_admin_allows_add_when_missing(admin_client: Client) -> None:
 
 def test_settings_str() -> None:
     assert str(UserSettings()) == "Settings"
+
+
+# --- Clock in the top bar --------------------------------------------------------------
+
+
+# The top bar shows today's date in the format chosen in Settings (here: ISO).
+def test_top_bar_shows_current_date_in_user_format(admin_client: Client) -> None:
+    user_settings = UserSettings.load()
+    user_settings.date_format = "Y-m-d"
+    user_settings.save()
+    today = timezone.localdate()
+
+    response = admin_client.get(reverse("core:home"))
+    assertContains(response, "data-clock")
+    assertContains(response, 'data-date-format="Y-m-d"')
+    assertContains(response, today.strftime("%Y-%m-%d"))
