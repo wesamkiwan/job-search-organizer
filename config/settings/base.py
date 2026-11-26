@@ -78,6 +78,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "organizer.core.context_processors.dev_tools",
+                "organizer.core.context_processors.user_settings",
             ],
             # Loaders are tried in order. The cotton loader first compiles <c-...> component
             # tags into normal Django template tags. The cached loader keeps compiled

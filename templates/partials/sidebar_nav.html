@@ -10,7 +10,7 @@
 <nav aria-label="Main" class="flex flex-1 flex-col overflow-y-auto px-3 py-4">
   <ul class="space-y-0.5">
     <li>{% include "partials/nav_item.html" with label="Dashboard" icon="layout-dashboard" url_name="core:home" %}</li>
-    <li>{% include "partials/nav_item.html" with label="Applications" icon="briefcase-business" %}</li>
+    <li>{% include "partials/nav_item.html" with label="Applications" icon="briefcase-business" url_name="applications:list" section="applications" %}</li>
     <li>{% include "partials/nav_item.html" with label="Companies" icon="building-2" %}</li>
     <li>{% include "partials/nav_item.html" with label="Contacts" icon="users" %}</li>
     <li>{% include "partials/nav_item.html" with label="Documents" icon="file-text" %}</li>

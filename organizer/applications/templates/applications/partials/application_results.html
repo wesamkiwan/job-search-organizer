@@ -1,0 +1,97 @@
+{% comment %}
+The results part of the application list: table, page links, empty states.
+Rendered inside application_list.html, and ALONE for HTMX requests (then it replaces the
+contents of #application-results). Same context as application_list.html.
+{% endcomment %}
+
+{# The current sort travels with the filter form: form="filters" attaches this input to it #}
+{# although it sits outside the <form> tag, so a new search keeps the chosen order.      #}
+<input type="hidden" name="sort" value="{{ filters.sort }}" form="filters">
+
+{% if page.object_list %}
+  <p class="mb-2 text-sm text-ink-muted">
+    {{ page.paginator.count }} application{{ page.paginator.count|pluralize }}
+  </p>
+
+  <c-card flush>
+    <c-table>
+      <thead>
+        <tr>
+          {% include "applications/partials/sort_header.html" with label="Position" key="title" %}
+          {% include "applications/partials/sort_header.html" with label="Company" key="company" %}
+          {% include "applications/partials/sort_header.html" with label="Stage" key="stage" %}
+          {% include "applications/partials/sort_header.html" with label="Applied" key="applied" first="desc" %}
+          <th scope="col">Location</th>
+          {% include "applications/partials/sort_header.html" with label="Updated" key="updated" first="desc" %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for application in page.object_list %}
+          {% with posting=application.posting %}
+            <tr>
+              <td class="max-w-xs">
+                <a href="{{ application.get_absolute_url }}" class="font-medium text-ink hover:text-accent hover:underline">
+                  {{ posting.title }}
+                </a>
+                {# .all uses the tags prefetched by the selector: no extra query per row. #}
+                {% if application.priority == "high" or application.tags.all %}
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    {% if application.priority == "high" %}<c-badge tone="warning">High priority</c-badge>{% endif %}
+                    {% for tag in application.tags.all %}<c-badge tone="{{ tag.color }}">{{ tag.name }}</c-badge>{% endfor %}
+                  </div>
+                {% endif %}
+              </td>
+              <td>{{ posting.company_display|default:"—" }}</td>
+              <td class="whitespace-nowrap"><c-badge tone="{{ application.stage.color }}" dot>{{ application.stage.name }}</c-badge></td>
+              <td class="whitespace-nowrap">
+                {% if application.applied_on %}
+                  {{ application.applied_on|date:user_settings.date_format }}
+                {% else %}
+                  <span class="text-ink-subtle">Not yet</span>
+                {% endif %}
+              </td>
+              <td class="text-ink-muted">
+                {{ posting.city|default:posting.location_text|default:"—" }}{% if posting.remote_type %} · {{ posting.get_remote_type_display }}{% endif %}
+              </td>
+              <td class="whitespace-nowrap text-ink-muted">{{ application.updated_at|date:user_settings.date_format }}</td>
+            </tr>
+          {% endwith %}
+        {% endfor %}
+      </tbody>
+    </c-table>
+  </c-card>
+
+  {% if page.has_other_pages %}
+    <nav aria-label="Pages" class="mt-4 flex items-center justify-between text-sm">
+      <span class="text-ink-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+      <div class="flex gap-2">
+        {% if page.has_previous %}
+          {% querystring page=page.previous_page_number as previous_url %}
+          <c-button variant="secondary" size="sm" href="{{ previous_url }}"
+                    hx-get="{{ previous_url }}" hx-target="#application-results" hx-push-url="true">
+            <c-icon name="chevron-left" />Previous
+          </c-button>
+        {% endif %}
+        {% if page.has_next %}
+          {% querystring page=page.next_page_number as next_url %}
+          <c-button variant="secondary" size="sm" href="{{ next_url }}"
+                    hx-get="{{ next_url }}" hx-target="#application-results" hx-push-url="true">
+            Next<c-icon name="chevron-right" />
+          </c-button>
+        {% endif %}
+      </div>
+    </nav>
+  {% endif %}
+
+{% elif has_any_application %}
+  <c-empty-state icon="search" title="No applications match"
+                 description="Try a different search, or show all stages and statuses.">
+    <c-button variant="secondary" href="{% url 'applications:list' %}">Clear filters</c-button>
+  </c-empty-state>
+
+{% else %}
+  <c-empty-state icon="briefcase-business" title="No applications yet"
+                 description="Add the jobs you apply to, or save interesting ones for later. Their stages, dates and history will show up here.">
+    <c-button href="{% url 'admin:applications_application_add' %}"><c-icon name="plus" />Add application</c-button>
+  </c-empty-state>
+{% endif %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% comment %}
+The application list. Context:
+  form:    ApplicationFilterForm (the filter bar)
+  filters: the ApplicationFilters in use
+  page:    the current page of applications (a Django Page object)
+  has_any_application: False when there are no applications at all (first-run empty state)
+
+How the live filtering works (HTMX):
+  The <form> below has hx-get: whenever you type (after a 300 ms pause), change a filter or
+  submit, HTMX sends the form as a GET request and puts the answer into #application-results.
+  The view sees the HX-Request header and returns ONLY partials/application_results.html.
+  hx-push-url updates the address bar, so the filtered list can be bookmarked and reloaded.
+  Without JavaScript it is a normal GET form (press Enter), so it still works.
+{% endcomment %}
+
+{% block title %}Applications · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Applications{% endblock page_title %}
+
+{% block content %}
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <p class="text-sm text-ink-muted">Every job you have saved or applied to.</p>
+    <c-button href="{% url 'admin:applications_application_add' %}">
+      <c-icon name="plus" />
+      Add application
+    </c-button>
+  </div>
+
+  {# role="search": tells screen readers this is the search area of the page. #}
+  <form id="filters" method="get" action="{% url 'applications:list' %}" role="search"
+        hx-get="{% url 'applications:list' %}"
+        hx-target="#application-results"
+        hx-trigger="input delay:300ms, change, submit"
+        hx-sync="this:replace"
+        hx-push-url="true"
+        hx-indicator="#application-results"
+        class="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+    <div class="relative sm:w-72">
+      <label for="id_q" class="sr-only">Search</label>
+      <c-icon name="search" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-subtle" />
+      <input id="id_q" name="q" type="search" value="{{ form.q.value|default_if_none:'' }}"
+             placeholder="Search job, company, city, notes" autocomplete="off" maxlength="100"
+             class="block h-9 w-full rounded-md border border-line-input bg-surface pr-3 pl-9 text-sm text-ink placeholder:text-ink-subtle focus-visible:border-accent focus-visible:outline-1 focus-visible:outline-offset-0">
+    </div>
+    <div class="sm:w-44">
+      <c-select label="Stage" name="stage" :options="form.stage.field.choices"
+                value="{{ form.stage.value|default_if_none:'' }}" hide_label />
+    </div>
+    <div class="sm:w-36">
+      <c-select label="Status" name="status" :options="form.status.field.choices"
+                value="{{ filters.status }}" hide_label />
+    </div>
+    <div class="sm:w-40">
+      <c-select label="Priority" name="priority" :options="form.priority.field.choices"
+                value="{{ filters.priority }}" hide_label />
+    </div>
+    {# Only needed without JavaScript; with HTMX the list updates by itself. #}
+    <noscript><c-button type="submit" variant="secondary">Apply filters</c-button></noscript>
+  </form>
+
+  {# aria-live="polite": screen readers announce the new results after a filter change. #}
+  {# While a request runs, HTMX adds the class htmx-request here, which dims the results. #}
+  <div id="application-results" aria-live="polite"
+       class="mt-4 transition-opacity [&.htmx-request]:opacity-60">
+    {% include "applications/partials/application_results.html" %}
+  </div>
+{% endblock content %}
