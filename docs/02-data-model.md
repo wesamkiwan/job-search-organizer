@@ -73,7 +73,7 @@ Rejected, Withdrawn and Ghosted (category `lost`).
 |---|---|
 | posting (1:1) | every application has a posting (manual entry creates one) |
 | stage (FK PipelineStage) | current stage, kept in sync with events |
-| applied_at | |
+| applied_on | date; empty while the application is only saved |
 | channel | company portal / email / applicant system / LinkedIn Easy Apply / Xing / recruiter / referral / other |
 | referred_by (FK Contact, nullable) | |
 | salary_expectation (+ currency) | *Gehaltsvorstellung* as stated in the application |
@@ -81,9 +81,9 @@ Rejected, Withdrawn and Ghosted (category `lost`).
 | priority | low / medium / high |
 | interest | 1–5 rating |
 | follow_up_on | date |
-| closed_at | set when the stage category becomes final |
+| closed_at | set when the stage category becomes final (by the services) |
 | outcome_stage | stage reached before rejection (for funnel analysis) |
-| rejection_reason | choice + free text |
+| rejection_reason, rejection_details | choice + free text |
 | notes | |
 | is_archived | |
 | tags (M2M Tag) | |

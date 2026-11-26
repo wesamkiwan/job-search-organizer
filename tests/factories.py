@@ -15,6 +15,13 @@ import factory
 from factory.django import DjangoModelFactory, Password
 
 from organizer.accounts.models import User
+from organizer.applications.models import (
+    Application,
+    ApplicationEvent,
+    EventKind,
+    PipelineStage,
+    Task,
+)
 from organizer.companies.models import Company, Contact
 from organizer.jobs.models import JobPosting, Tag
 from organizer.sources.models import Source
@@ -96,3 +103,56 @@ class JobPostingFactory(DjangoModelFactory[JobPosting]):
     def tags(self, create: bool, extracted: list[Tag] | None, **kwargs: object) -> None:
         if create and extracted:
             self.tags.add(*extracted)
+
+
+# --- applications ----------------------------------------------------------------------
+
+
+def stage(name: str) -> PipelineStage:
+    """One of the default stages created by the data migration, e.g. stage("Applied")."""
+    return PipelineStage.objects.get(name=name)
+
+
+class PipelineStageFactory(DjangoModelFactory[PipelineStage]):
+    """For tests that need an extra stage; most tests use the defaults via stage()."""
+
+    class Meta:
+        model = PipelineStage
+
+    name = factory.Sequence(lambda n: f"Stage {n}")
+    order = factory.Sequence(lambda n: 100 + n)
+    category = "in_progress"
+
+
+class ApplicationFactory(DjangoModelFactory[Application]):
+    """Saves the row directly, WITHOUT the services (no timeline event). Good for tests of
+    reading data; tests of the workflow call services.create_application() instead."""
+
+    class Meta:
+        model = Application
+        skip_postgeneration_save = True
+
+    posting = factory.SubFactory(JobPostingFactory)
+    # LazyFunction: called when each application is built (the database is ready then).
+    stage = factory.LazyFunction(lambda: PipelineStage.objects.get(name="Applied"))
+
+    @factory.post_generation
+    def tags(self, create: bool, extracted: list[Tag] | None, **kwargs: object) -> None:
+        if create and extracted:
+            self.tags.add(*extracted)
+
+
+class ApplicationEventFactory(DjangoModelFactory[ApplicationEvent]):
+    class Meta:
+        model = ApplicationEvent
+
+    application = factory.SubFactory(ApplicationFactory)
+    kind = EventKind.NOTE
+    summary = factory.Sequence(lambda n: f"Note {n}")
+
+
+class TaskFactory(DjangoModelFactory[Task]):
+    class Meta:
+        model = Task
+
+    title = factory.Sequence(lambda n: f"Task {n}")
