@@ -22,6 +22,21 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
+class CustomDataModel(models.Model):
+    """Base class for models whose user-defined fields live in a JSON column.
+
+    In Phase 3 the user defines extra fields (FieldDefinition); their values are stored
+    here as {"field_key": value, ...}. See docs/adr/0002-custom-fields-json.md.
+    """
+
+    # default=dict (the function, NOT {}): every row gets its own new empty dict.
+    # A literal {} would be one shared object, a classic Python bug.
+    custom_data = models.JSONField("custom fields", default=dict, blank=True)
+
+    class Meta:
+        abstract = True
+
+
 class Currency(models.TextChoices):
     EUR = "EUR", "Euro (EUR)"
     CHF = "CHF", "Swiss franc (CHF)"
