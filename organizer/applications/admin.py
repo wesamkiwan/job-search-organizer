@@ -1,7 +1,11 @@
+from typing import Any
+
 from django.contrib import admin
 from django.db.models import Count, QuerySet
+from django.forms import ModelForm
 from django.http import HttpRequest
 
+from . import services
 from .models import Application, ApplicationEvent, PipelineStage, Task
 
 
@@ -24,9 +28,21 @@ class PipelineStageAdmin(admin.ModelAdmin):
 
 
 class EventInline(admin.TabularInline):
+    """The timeline, read-only: events are written by the services, never by hand here."""
+
     model = ApplicationEvent
     fields = ("occurred_at", "kind", "from_stage", "to_stage", "summary")
+    readonly_fields = fields
     extra = 0
+
+    def has_add_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
+
+    def has_delete_permission(self, request: HttpRequest, obj: Any = None) -> bool:
+        return False
 
 
 class TaskInline(admin.TabularInline):
@@ -51,7 +67,6 @@ class ApplicationAdmin(admin.ModelAdmin):
     # Two levels deep: application → posting → company, all in one query.
     list_select_related = ("posting__company", "stage")
     autocomplete_fields = ("posting", "referred_by", "tags")
-    readonly_fields = ("created_at", "updated_at")
     inlines = (EventInline, TaskInline)
     fieldsets = (
         (None, {"fields": ("posting", "stage", "applied_on", "channel", "referred_by", "tags")}),
@@ -86,6 +101,24 @@ class ApplicationAdmin(admin.ModelAdmin):
     @admin.display(description="company", ordering="posting__company__name")
     def company(self, obj: Application) -> str:
         return obj.posting.company_display
+
+    # The stage and the outcome fields belong to the services (see services.py). On an
+    # existing application they are read-only here; stage changes come with the app's own
+    # pages (step 1.7). When ADDING, you pick the starting stage.
+    def get_readonly_fields(self, request: HttpRequest, obj: Any = None) -> list[str]:
+        fields = ["created_at", "updated_at", "closed_at", "outcome_stage"]
+        if obj is not None:
+            fields.append("stage")
+        return fields
+
+    def save_model(
+        self, request: HttpRequest, obj: Application, form: ModelForm, change: bool
+    ) -> None:
+        if change:
+            super().save_model(request, obj, form, change)
+        else:
+            # A new application goes through the service, so it gets its first event.
+            services.create_application(obj)
 
 
 @admin.register(Task)
