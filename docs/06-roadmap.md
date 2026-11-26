@@ -13,6 +13,8 @@ done on feature branches.
 
 ## Phase 1: Tracker MVP
 - Company, Contact, JobPosting, Application, PipelineStage (+ default stages), ApplicationEvent, Tag, Task
+- Basic Source (name, kind, website; defaults Manual, StepStone, LinkedIn), so every posting
+  records where it was found from the start; Phase 6 extends it with adapters and configuration
 - Services: create application, change stage (writes events), close application
 - Application list (filters, search, sorting), detail page with timeline, kanban board
 - Company and contact pages
