@@ -15,6 +15,7 @@ import factory
 from factory.django import DjangoModelFactory, Password
 
 from organizer.accounts.models import User
+from organizer.companies.models import Company, Contact
 
 # The password every factory user has, so tests can log in with it.
 DEFAULT_PASSWORD = "correct-horse-battery-staple"
@@ -32,3 +33,25 @@ class UserFactory(DjangoModelFactory[User]):
     email = factory.LazyAttribute(lambda obj: f"{obj.username}@example.com")
     # Password() hashes the text the same way Django does, so login works.
     password = Password(DEFAULT_PASSWORD)
+
+
+# --- companies -------------------------------------------------------------------------
+
+
+class CompanyFactory(DjangoModelFactory[Company]):
+    class Meta:
+        model = Company
+
+    name = factory.Sequence(lambda n: f"Company {n}")
+    industry = "Software"
+
+
+class ContactFactory(DjangoModelFactory[Contact]):
+    class Meta:
+        model = Contact
+
+    # Faker generates realistic fake data ("Lena", "Schmidt"). locale de_DE: German names.
+    first_name = factory.Faker("first_name", locale="de_DE")
+    last_name = factory.Faker("last_name", locale="de_DE")
+    # SubFactory: also creates a company for the contact (pass company=None to skip).
+    company = factory.SubFactory(CompanyFactory)
