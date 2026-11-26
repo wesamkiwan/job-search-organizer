@@ -37,6 +37,18 @@ class CustomDataModel(models.Model):
         abstract = True
 
 
+class Tone(models.TextChoices):
+    """Colours for labels (tags, stages). The same names as the tones of <c-badge>, so a
+    stored value can be passed straight to it: <c-badge tone="{{ tag.color }}">."""
+
+    NEUTRAL = "neutral", "Grey"
+    ACCENT = "accent", "Accent"
+    SUCCESS = "success", "Green"
+    WARNING = "warning", "Amber"
+    DANGER = "danger", "Red"
+    INFO = "info", "Blue"
+
+
 class Currency(models.TextChoices):
     EUR = "EUR", "Euro (EUR)"
     CHF = "CHF", "Swiss franc (CHF)"

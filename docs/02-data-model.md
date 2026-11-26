@@ -161,6 +161,9 @@ A version that has been sent can no longer be deleted.
 ## Discovery
 
 ### Source
+Phase 1 creates a basic version (name, kind, website, is_enabled) with the default sources
+Manual, StepStone and LinkedIn; `adapter`, `config` and `field_mapping` follow in Phase 6.
+
 | Field | Notes |
 |---|---|
 | name, kind | `manual`, `url_import`, `bookmarklet`, `email_alert`, `api`, `rss`, `jsonld`, `html` |
