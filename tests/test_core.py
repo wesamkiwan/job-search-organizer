@@ -143,3 +143,27 @@ def test_updated_at_changes_on_save_but_created_at_does_not() -> None:
 
     assert user_settings.created_at == created
     assert user_settings.updated_at > first_update
+
+
+# --- UserSettings admin ----------------------------------------------------------------
+
+
+# The settings row can't be added a second time or deleted from the admin.
+def test_settings_admin_has_no_add_or_delete(admin_client: Client) -> None:
+    UserSettings.load()
+    response = admin_client.get(reverse("admin:core_usersettings_changelist"))
+    assert response.status_code == 200
+    assert not response.context["has_add_permission"]
+    change_url = reverse("admin:core_usersettings_change", args=[UserSettings.SINGLETON_PK])
+    assertNotContains(admin_client.get(change_url), "deletelink")
+
+
+# Before the row exists, adding it is allowed.
+@pytest.mark.django_db
+def test_settings_admin_allows_add_when_missing(admin_client: Client) -> None:
+    response = admin_client.get(reverse("admin:core_usersettings_add"))
+    assert response.status_code == 200
+
+
+def test_settings_str() -> None:
+    assert str(UserSettings()) == "Settings"
