@@ -186,7 +186,8 @@ def test_admin_pages_load(admin_client: Client, url_name: str) -> None:
 
 def test_application_admin_change_page_loads(admin_client: Client) -> None:
     application = ApplicationEventFactory.create().application
-    assert admin_client.get(application.get_absolute_url()).status_code == 200
+    url = reverse("admin:applications_application_change", args=[application.pk])
+    assert admin_client.get(url).status_code == 200
 
 
 def test_stage_admin_counts_applications(admin_client: Client) -> None:

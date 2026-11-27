@@ -92,6 +92,6 @@ contents of #application-results). Same context as application_list.html.
 {% else %}
   <c-empty-state icon="briefcase-business" title="No applications yet"
                  description="Add the jobs you apply to, or save interesting ones for later. Their stages, dates and history will show up here.">
-    <c-button href="{% url 'admin:applications_application_add' %}"><c-icon name="plus" />Add application</c-button>
+    <c-button href="{% url 'applications:create' %}"><c-icon name="plus" />Add application</c-button>
   </c-empty-state>
 {% endif %}

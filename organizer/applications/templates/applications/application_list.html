@@ -21,7 +21,7 @@ How the live filtering works (HTMX):
 {% block content %}
   <div class="flex flex-wrap items-center justify-between gap-4">
     <p class="text-sm text-ink-muted">Every job you have saved or applied to.</p>
-    <c-button href="{% url 'admin:applications_application_add' %}">
+    <c-button href="{% url 'applications:create' %}">
       <c-icon name="plus" />
       Add application
     </c-button>

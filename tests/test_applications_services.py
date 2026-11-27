@@ -103,7 +103,9 @@ def test_change_stage_moves_and_records_event() -> None:
 
 # Leaving "Saved" means you applied: applied_on is filled with the (backdated) date.
 def test_leaving_saved_sets_applied_on_from_occurred_at() -> None:
-    application = services.create_application(new_application(stage=stage("Saved")))
+    application = services.create_application(
+        new_application(stage=stage("Saved")), occurred_at=days_ago(5)
+    )
     when = days_ago(3)
     services.change_stage(application, stage("Applied"), occurred_at=when)
     assert application.applied_on == timezone.localdate(when)
@@ -124,9 +126,27 @@ def test_future_date_is_refused() -> None:
         )
 
 
+# The timeline stays in order: no stage change before the previous one.
+def test_change_before_last_stage_change_is_refused() -> None:
+    application = services.create_application(new_application(), occurred_at=days_ago(3))
+    with pytest.raises(ApplicationError, match="before the last stage change"):
+        services.change_stage(application, stage("Screening"), occurred_at=days_ago(5))
+
+
+# ...but within the same minute is fine: a form's "now" (14:05) right after creating the
+# application at 14:05:33 must not be refused.
+def test_change_in_same_minute_is_allowed() -> None:
+    application = services.create_application(new_application())
+    created = application.events.get().occurred_at
+    same_minute = created.replace(second=0, microsecond=0)
+    services.change_stage(application, stage("Screening"), occurred_at=same_minute)
+
+
 # Reaching a lost stage closes the application and remembers how far it got.
 def test_lost_stage_closes_and_keeps_outcome_stage() -> None:
-    application = services.create_application(new_application(stage=stage("Interviewing")))
+    application = services.create_application(
+        new_application(stage=stage("Interviewing")), occurred_at=days_ago(5)
+    )
     when = days_ago(1)
     services.change_stage(application, stage("Ghosted"), occurred_at=when)
     assert application.closed_at == when
@@ -226,6 +246,10 @@ def test_change_stage_is_atomic(monkeypatch: pytest.MonkeyPatch) -> None:
 # --- admin uses the services -----------------------------------------------------------
 
 
+def admin_change_url(application: Application) -> str:
+    return reverse("admin:applications_application_change", args=[application.pk])
+
+
 def management_form(prefix: str) -> dict[str, str]:
     """The hidden counter fields Django's admin sends for each inline table."""
     return {f"{prefix}-TOTAL_FORMS": "0", f"{prefix}-INITIAL_FORMS": "0"}
@@ -252,7 +276,7 @@ def test_admin_add_writes_first_event(admin_client: Client) -> None:
 # On an existing application the stage can't be edited in the admin.
 def test_admin_stage_is_read_only_on_change(admin_client: Client) -> None:
     application = services.create_application(new_application())
-    response = admin_client.get(application.get_absolute_url())
+    response = admin_client.get(admin_change_url(application))
     assert "stage" not in response.context["adminform"].form.fields
 
 
@@ -272,7 +296,7 @@ def test_admin_edit_saves_other_fields(admin_client: Client) -> None:
         "events-0-application": application.pk,
         **management_form("tasks"),
     }
-    response = admin_client.post(application.get_absolute_url(), data)
+    response = admin_client.post(admin_change_url(application), data)
     assert response.status_code == 302
     application.refresh_from_db()
     assert application.priority == "high"

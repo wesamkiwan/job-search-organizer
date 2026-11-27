@@ -1,0 +1,23 @@
+{% comment %}
+Labelled multi-line text box, the <textarea> sibling of <c-field> (same label/help/error look).
+Usage: <c-textarea label="Notes" name="notes" value="..." rows="4" help="Only you see this." />
+{% endcomment %}
+<c-vars label name value="" help="" error="" required=False rows="4" />
+{% with field_id="id_"|add:name %}
+  <div>
+    <label for="{{ field_id }}" class="block text-sm font-medium">
+      {{ label }}{% if required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+    <textarea id="{{ field_id }}" name="{{ name }}" rows="{{ rows }}"
+              {% if required %}required{% endif %}
+              {% if error %}aria-invalid="true"{% endif %}
+              {% if help or error %}aria-describedby="{{ field_id }}_hint"{% endif %}
+              class="mt-1.5 block w-full rounded-md border border-line-input bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-subtle focus-visible:border-accent focus-visible:outline-1 focus-visible:outline-offset-0 aria-invalid:border-danger"
+              {{ attrs }}>{{ value }}</textarea>
+    {% if error %}
+      <p id="{{ field_id }}_hint" class="mt-1.5 text-sm text-danger">{{ error }}</p>
+    {% elif help %}
+      <p id="{{ field_id }}_hint" class="mt-1.5 text-sm text-ink-subtle">{{ help }}</p>
+    {% endif %}
+  </div>
+{% endwith %}

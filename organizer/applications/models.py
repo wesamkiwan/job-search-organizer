@@ -176,8 +176,14 @@ class Application(TimeStampedModel, CustomDataModel):
     def is_closed(self) -> bool:
         return self.closed_at is not None
 
+    @property
+    def salary_expectation_display(self) -> str:
+        if not self.salary_expectation:
+            return ""
+        return f"{self.salary_expectation:,} {self.salary_expectation_currency}"
+
     def get_absolute_url(self) -> str:
-        return reverse("admin:applications_application_change", args=[self.pk])
+        return reverse("applications:detail", args=[self.pk])
 
 
 # --- ApplicationEvent (the timeline) -----------------------------------------------------

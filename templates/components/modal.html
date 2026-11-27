@@ -2,26 +2,35 @@
 Modal dialog built on the native <dialog> element. The browser provides focus handling,
 closing with Escape and the backdrop, so no JavaScript library is needed.
 Open:  <c-button @click="document.getElementById('confirm-delete').showModal()">Delete</c-button>
-Close: any button inside <form method="dialog"> closes it (no JavaScript at all).
+
+Two kinds:
+  - Information only (no action): any button in the footer just closes the dialog.
+  - A form (action="/some/url/"): the whole dialog is a POST form sent to that URL. Put
+    {% csrf_token %} and any fields in the body. A Cancel button must close without
+    sending: <c-button type="submit" formmethod="dialog" formnovalidate>Cancel</c-button>
+    (components don't see the page's context, so the page adds the csrf_token itself.)
+
 Usage:
-  <c-modal id="confirm-delete" title="Delete application?">
-    This cannot be undone.
+  <c-modal id="confirm-delete" title="Delete application?" action="{% url '...' %}">
+    {% csrf_token %} This cannot be undone.
     <c-slot name="footer">...buttons...</c-slot>
   </c-modal>
 Without a footer slot, a "Close" button is shown.
 {% endcomment %}
-<c-vars id title />
+<c-vars id title action="" />
 <dialog id="{{ id }}" aria-labelledby="{{ id }}-title"
         class="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-line bg-surface p-0 text-ink shadow-popover backdrop:bg-overlay">
-  <div class="px-5 pt-5">
-    <h2 id="{{ id }}-title" class="font-semibold tracking-tight">{{ title }}</h2>
-    <div class="mt-2 text-sm text-ink-muted">{{ slot }}</div>
-  </div>
-  <form method="dialog" class="mt-5 flex justify-end gap-2 border-t border-line bg-canvas px-5 py-3">
-    {% if footer %}
-      {{ footer }}
-    {% else %}
-      <c-button type="submit" variant="secondary">Close</c-button>
-    {% endif %}
+  <form {% if action %}method="post" action="{{ action }}"{% else %}method="dialog"{% endif %}>
+    <div class="px-5 pt-5">
+      <h2 id="{{ id }}-title" class="font-semibold tracking-tight">{{ title }}</h2>
+      <div class="mt-2 text-sm text-ink-muted">{{ slot }}</div>
+    </div>
+    <div class="mt-5 flex justify-end gap-2 border-t border-line bg-canvas px-5 py-3">
+      {% if footer %}
+        {{ footer }}
+      {% else %}
+        <c-button type="submit" variant="secondary">Close</c-button>
+      {% endif %}
+    </div>
   </form>
 </dialog>

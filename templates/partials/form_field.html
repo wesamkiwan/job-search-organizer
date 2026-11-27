@@ -1,0 +1,52 @@
+{% comment %}
+Renders ONE Django form field with our components, so forms don't repeat label/help/error
+markup field by field:
+  {% include "partials/form_field.html" with field=form.title %}
+
+field is a BoundField (a form field + its current value + its errors). It picks the component
+from the field's widget:
+  select                 → <c-select>
+  textarea               → <c-textarea>
+  checkboxselectmultiple → a row of checkbox "chips" (e.g. tags)
+  everything else        → <c-field>, with the widget's HTML type (text, number, date, url, ...)
+field.html_name includes the form prefix ("posting-title"), so two forms on one page don't clash.
+{% endcomment %}
+{% if field.widget_type == "select" %}
+  <c-select label="{{ field.label }}" name="{{ field.html_name }}" :options="field.field.choices"
+            value="{{ field.value|default_if_none:'' }}" help="{{ field.help_text }}"
+            error="{{ field.errors.0|default:'' }}" :required="field.field.required" />
+
+{% elif field.widget_type == "textarea" %}
+  <c-textarea label="{{ field.label }}" name="{{ field.html_name }}"
+              value="{{ field.value|default_if_none:'' }}" help="{{ field.help_text }}"
+              error="{{ field.errors.0|default:'' }}" :required="field.field.required"
+              rows="{{ field.field.widget.attrs.rows|default:4 }}" />
+
+{% elif field.widget_type == "checkboxselectmultiple" %}
+  <fieldset>
+    <legend class="text-sm font-medium">{{ field.label }}</legend>
+    {% if field.field.choices %}
+      <div class="mt-2 flex flex-wrap gap-2">
+        {# Each option is a BoundWidget: .data holds its value, label and "selected" state. #}
+        {% for option in field %}
+          <label class="inline-flex cursor-pointer items-center gap-2 rounded-md border border-line-input bg-surface px-2.5 py-1.5 text-sm has-checked:border-accent has-checked:bg-accent-soft has-checked:text-accent">
+            <input type="checkbox" name="{{ field.html_name }}" value="{{ option.data.value }}"
+                   {% if option.data.selected %}checked{% endif %} class="accent-accent">
+            {{ option.choice_label }}
+          </label>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="mt-1.5 text-sm text-ink-subtle">None yet. You can add some in the admin.</p>
+    {% endif %}
+    {% if field.errors %}<p class="mt-1.5 text-sm text-danger">{{ field.errors.0 }}</p>{% endif %}
+  </fieldset>
+
+{% else %}
+  <c-field label="{{ field.label }}" name="{{ field.html_name }}"
+           type="{{ field.field.widget.input_type }}"
+           value="{{ field.value|default_if_none:'' }}" help="{{ field.help_text }}"
+           error="{{ field.errors.0|default:'' }}" :required="field.field.required"
+           placeholder="{{ field.field.widget.attrs.placeholder|default:'' }}"
+           list="{{ field.field.widget.attrs.list|default:'' }}" />
+{% endif %}

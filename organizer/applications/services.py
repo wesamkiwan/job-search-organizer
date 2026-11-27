@@ -73,6 +73,14 @@ def change_stage(
     if to_stage.pk == application.stage_id:
         raise ApplicationError(f"The application is already in “{to_stage}”.")
     when = _check_time(occurred_at)
+    # The timeline must stay in order: a stage change can't be dated before the last one.
+    last_change = (
+        application.events.filter(kind=EventKind.STAGE_CHANGE).order_by("-occurred_at").first()
+    )
+    # Compared by the minute: forms send "14:05", while the last change may be 14:05:33.
+    if last_change is not None and when < last_change.occurred_at.replace(second=0, microsecond=0):
+        last = timezone.localtime(last_change.occurred_at).strftime("%d.%m.%Y %H:%M")
+        raise ApplicationError(f"The date can't be before the last stage change ({last}).")
     from_stage = application.stage
 
     _enter_stage(application, from_stage=from_stage, to_stage=to_stage, when=when)
@@ -111,6 +119,39 @@ def close_application(
     # change_stage saves the application (with the reason) and writes the event. It has
     # its own @transaction.atomic; nested inside ours it simply joins this transaction.
     return change_stage(application, stage, occurred_at=occurred_at)
+
+
+def add_event(
+    application: Application,
+    *,
+    kind: str,
+    summary: str,
+    details: str = "",
+    occurred_at: datetime | None = None,
+) -> ApplicationEvent:
+    """Add a note, call, email, ... to the timeline (anything except a stage change)."""
+    if kind == EventKind.STAGE_CHANGE:
+        raise ApplicationError("Stage changes are recorded by changing the stage.")
+    if not summary.strip():
+        raise ApplicationError("Please write a short summary.")
+    when = _check_time(occurred_at)
+    event = ApplicationEvent.objects.create(
+        application=application, kind=kind, summary=summary.strip(), details=details,
+        occurred_at=when,
+    )  # fmt: skip
+    # New activity counts as an update (the list's "Updated" column sorts by it).
+    # update() changes only this column, without loading or saving the whole object.
+    Application.objects.filter(pk=application.pk).update(updated_at=timezone.now())
+    return event
+
+
+@transaction.atomic
+def delete_application(application: Application) -> None:
+    """Delete an application and its timeline and tasks. The job posting stays (as saved)."""
+    posting = application.posting
+    application.delete()  # events and tasks go too (CASCADE)
+    posting.triage_status = TriageStatus.SAVED
+    posting.save(update_fields=("triage_status", "updated_at"))
 
 
 # --- helpers (the leading underscore means: only for use inside this module) -------------

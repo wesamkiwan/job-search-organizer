@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% comment %}
+Add or edit an application. Context:
+  posting_form:     PostingForm (the job)
+  application_form: ApplicationForm (the application; no stage field when editing)
+  application:      the Application being edited, or None when adding
+  company_names:    existing company names for the type-ahead suggestions
+Fields are rendered in a loop by partials/form_field.html; a form's wide_fields span both
+columns. novalidate: the server validates (and shows errors in our style), not the browser.
+{% endcomment %}
+
+{% block title %}{% if application %}Edit application{% else %}Add application{% endif %} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}{% if application %}Edit application{% else %}Add application{% endif %}{% endblock page_title %}
+
+{% block content %}
+  <form method="post" class="max-w-3xl space-y-6" novalidate>
+    {% csrf_token %}
+
+    {# Errors that belong to no single field, e.g. "minimum salary higher than maximum". #}
+    {% for error in posting_form.non_field_errors %}<c-alert tone="danger">{{ error }}</c-alert>{% endfor %}
+    {% for error in application_form.non_field_errors %}<c-alert tone="danger">{{ error }}</c-alert>{% endfor %}
+
+    <c-card title="The job" description="What the job ad says. Only the title is required.">
+      <div class="grid gap-5 sm:grid-cols-2">
+        {% for field in posting_form %}
+          <div {% if field.name in posting_form.wide_fields %}class="sm:col-span-2"{% endif %}>
+            {% include "partials/form_field.html" %}
+          </div>
+        {% endfor %}
+      </div>
+      {# Suggestions while typing the company name (native HTML, no JavaScript). #}
+      <datalist id="company-names">
+        {% for name in company_names %}<option value="{{ name }}"></option>{% endfor %}
+      </datalist>
+    </c-card>
+
+    <c-card title="Your application" description="How and when you applied, and what you think of it.">
+      <div class="grid gap-5 sm:grid-cols-2">
+        {% for field in application_form %}
+          <div {% if field.name in application_form.wide_fields %}class="sm:col-span-2"{% endif %}>
+            {% include "partials/form_field.html" %}
+          </div>
+        {% endfor %}
+      </div>
+    </c-card>
+
+    <div class="flex justify-end gap-2">
+      <c-button variant="secondary"
+                href="{% if application %}{{ application.get_absolute_url }}{% else %}{% url 'applications:list' %}{% endif %}">
+        Cancel
+      </c-button>
+      <c-button type="submit">{% if application %}Save changes{% else %}Add application{% endif %}</c-button>
+    </div>
+  </form>
+{% endblock content %}
