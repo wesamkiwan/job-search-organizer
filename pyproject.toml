@@ -10,6 +10,8 @@ dependencies = [
     "django-cotton>=2.9.0",
     "django-environ>=0.14.0",
     "django-tailwind-cli>=4.10.0",
+    "pypdf[crypto]>=7.2.0",
+    "python-docx>=1.2.0",
 ]
 
 [dependency-groups]

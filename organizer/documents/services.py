@@ -7,7 +7,7 @@ Why a service layer (like applications/services.py)? Uploading a version is more
   - check the file: allowed type (by its CONTENT, not only its name) and size
   - compute its SHA-256 fingerprint and refuse a file that is already stored
   - give it the next version number of its document
-  - remember the original name, size and type
+  - remember the original name, size and type, and extract its text (extraction.py)
 
 Deleting must also remove the file from the disk, and must refuse versions that were
 sent with an application. Sending a version records it on the application's timeline.
@@ -28,6 +28,8 @@ from django.utils import timezone
 
 from organizer.applications.models import Application, ApplicationEvent, EventKind
 
+from .extraction import extract_text
+from .file_types import ALLOWED_TYPES, DOCX_MIME_TYPE, MAGIC_BYTES
 from .models import ApplicationDocument, Document, DocumentVersion
 
 
@@ -36,28 +38,6 @@ class DocumentError(Exception):
 
 
 # --- checking a file ---------------------------------------------------------------------
-
-DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-# Allowed file extensions and the MIME type each one stands for. A MIME type is the
-# standard name of a file format ("application/pdf"); browsers use it to decide what to
-# do with a download.
-ALLOWED_TYPES = {
-    ".pdf": "application/pdf",
-    ".docx": DOCX_MIME_TYPE,
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-}
-
-# "Magic bytes": the first bytes of a file tell its real format, whatever its name says.
-# Renaming virus.exe to cv.pdf does not change its first bytes.
-MAGIC_BYTES = {
-    "application/pdf": b"%PDF-",
-    "image/png": b"\x89PNG\r\n\x1a\n",
-    "image/jpeg": b"\xff\xd8\xff",
-    DOCX_MIME_TYPE: b"PK\x03\x04",  # a .docx is a ZIP archive (checked more closely below)
-}
 
 
 @dataclass(frozen=True)
@@ -158,6 +138,8 @@ def upload_version(
         mime_type=checked.mime_type,
         original_filename=checked.original_filename,
         change_notes=change_notes,
+        # Read the text now, while we have the file: for search and future AI features.
+        extracted_text=extract_text(file, checked.mime_type),
     )
     version.file.save(checked.original_filename, file, save=False)  # writes the file
     try:

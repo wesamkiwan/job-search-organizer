@@ -1,6 +1,4 @@
 import hashlib
-import io
-import zipfile
 from collections.abc import Callable
 from contextlib import AbstractContextManager
 from datetime import timedelta
@@ -17,8 +15,9 @@ from pytest_django.asserts import assertContains
 
 from organizer.applications.models import EventKind
 from organizer.documents import services
+from organizer.documents.file_types import DOCX_MIME_TYPE
 from organizer.documents.models import ApplicationDocument, DocumentVersion
-from organizer.documents.services import DOCX_MIME_TYPE, DocumentError
+from organizer.documents.services import DocumentError
 from tests.factories import (
     PDF_BYTES,
     ApplicationDocumentFactory,
@@ -26,6 +25,7 @@ from tests.factories import (
     DocumentFactory,
     DocumentVersionFactory,
 )
+from tests.sample_files import JPEG_BYTES, PNG_BYTES, make_zip
 
 pytestmark = pytest.mark.django_db
 
@@ -37,19 +37,6 @@ OnCommit = Callable[..., AbstractContextManager[list[Callable[[], object]]]]
 def on_commit(django_capture_on_commit_callbacks: OnCommit) -> OnCommit:
     """A shorter name for pytest-django's django_capture_on_commit_callbacks."""
     return django_capture_on_commit_callbacks
-
-
-PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
-JPEG_BYTES = b"\xff\xd8\xff\xe0" + b"\x00" * 16
-
-
-def make_zip(*names: str) -> bytes:
-    """A ZIP archive (in memory) that contains files with these names."""
-    buffer = io.BytesIO()
-    with zipfile.ZipFile(buffer, "w") as archive:
-        for name in names:
-            archive.writestr(name, "<xml/>")
-    return buffer.getvalue()
 
 
 def upload(name: str = "cv.pdf", content: bytes = PDF_BYTES) -> SimpleUploadedFile:
