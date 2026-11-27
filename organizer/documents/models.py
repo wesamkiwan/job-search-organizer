@@ -128,8 +128,11 @@ class DocumentVersion(TimeStampedModel):
     size_bytes = models.PositiveBigIntegerField("size (bytes)", editable=False)
     mime_type = models.CharField("MIME type", max_length=100, editable=False)
     original_filename = models.CharField(max_length=255, editable=False)
-    # Plain text taken out of PDF / DOCX files (batch B): for search and future AI features.
+    # Plain text taken out of PDF / DOCX files: for search and future AI features.
     extracted_text = models.TextField(blank=True, editable=False)
+    # null=True: "unknown" is stored as NULL (empty), which is not the same as 0 pages.
+    # Exact for PDFs; for Word files the number Word saved in the file (see extraction.py).
+    page_count = models.PositiveIntegerField("pages", null=True, blank=True, editable=False)
     change_notes = models.TextField(blank=True, help_text="What changed in this version?")
 
     class Meta:

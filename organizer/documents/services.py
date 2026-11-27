@@ -7,7 +7,7 @@ Why a service layer (like applications/services.py)? Uploading a version is more
   - check the file: allowed type (by its CONTENT, not only its name) and size
   - compute its SHA-256 fingerprint and refuse a file that is already stored
   - give it the next version number of its document
-  - remember the original name, size and type, and extract its text (extraction.py)
+  - remember the original name, size and type, and read its text and page count
 
 Deleting must also remove the file from the disk, and must refuse versions that were
 sent with an application. Sending a version records it on the application's timeline.
@@ -28,7 +28,7 @@ from django.utils import timezone
 
 from organizer.applications.models import Application, ApplicationEvent, EventKind
 
-from .extraction import extract_text
+from .extraction import read_contents
 from .file_types import ALLOWED_TYPES, DOCX_MIME_TYPE, MAGIC_BYTES
 from .models import ApplicationDocument, Document, DocumentVersion
 
@@ -129,6 +129,8 @@ def upload_version(
     # database on write anyway; PostgreSQL in Phase 8 really needs this.)
     Document.objects.select_for_update().filter(pk=document.pk).first()
     last_number = document.versions.aggregate(last=Max("version_number"))["last"] or 0
+    # Read the text and page count now, while we have the file (extraction.py).
+    contents = read_contents(file, checked.mime_type)
 
     version = DocumentVersion(
         document=document,
@@ -138,8 +140,8 @@ def upload_version(
         mime_type=checked.mime_type,
         original_filename=checked.original_filename,
         change_notes=change_notes,
-        # Read the text now, while we have the file: for search and future AI features.
-        extracted_text=extract_text(file, checked.mime_type),
+        extracted_text=contents.text,
+        page_count=contents.page_count,
     )
     version.file.save(checked.original_filename, file, save=False)  # writes the file
     try:

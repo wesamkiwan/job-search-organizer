@@ -55,7 +55,7 @@ Every action is a normal POST form that redirects back here (Post/Redirect/Get).
                     {% if version.sent_count %}<c-badge tone="success">Sent with {{ version.sent_count }} application{{ version.sent_count|pluralize }}</c-badge>{% endif %}
                   </p>
                   <p class="mt-0.5 text-xs text-ink-subtle">
-                    {{ version.size_bytes|filesizeformat }} · uploaded {{ version.created_at|date:user_settings.date_format }}
+                    {{ version.size_bytes|filesizeformat }} · uploaded {{ version.created_at|date:user_settings.date_format }}{% if version.page_count %} · {{ version.page_count }} page{{ version.page_count|pluralize }}{% endif %}
                   </p>
                   {% if version.change_notes %}<p class="mt-1.5 text-sm whitespace-pre-line text-ink-muted">{{ version.change_notes }}</p>{% endif %}
                 </div>
@@ -65,6 +65,14 @@ Every action is a normal POST form that redirects back here (Post/Redirect/Get).
                     <c-button size="sm" variant="ghost" href="{% url 'documents:download' version.pk %}?preview=1" target="_blank" title="Open in a new tab">
                       <c-icon name="eye" /><span class="sr-only">Preview v{{ version.version_number }}</span>
                     </c-button>
+                  {% else %}
+                    {# Browsers can't show Word files. A disabled button ignores the mouse #}
+                    {# (pointer-events-none), so the tooltip (title) sits on the wrapper.   #}
+                    <span class="inline-flex" title="Word files can't be shown in the browser. Download the file instead.">
+                      <c-button size="sm" variant="ghost" disabled>
+                        <c-icon name="eye" /><span class="sr-only">No preview for Word files</span>
+                      </c-button>
+                    </span>
                   {% endif %}
                   <c-button size="sm" variant="ghost" href="{% url 'documents:download' version.pk %}" title="Download">
                     <c-icon name="download" /><span class="sr-only">Download v{{ version.version_number }}</span>

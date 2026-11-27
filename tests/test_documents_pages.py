@@ -87,6 +87,14 @@ def test_list_is_grouped_by_type() -> None:
     assert list(document_list()) == [cv, letter]
 
 
+def test_document_list_shows_pages_of_the_latest_version() -> None:
+    document = DocumentFactory.create()
+    DocumentVersionFactory.create(document=document, page_count=4)
+    DocumentVersionFactory.create(document=document, page_count=2)  # the latest
+    DocumentFactory.create()  # no versions → unknown
+    assert [d.latest_page_count for d in document_list()] == [2, None]  # type: ignore[attr-defined]
+
+
 def test_versions_of_newest_first_with_sent_count() -> None:
     document = DocumentFactory.create()
     first, second = DocumentVersionFactory.create_batch(2, document=document)
@@ -100,9 +108,10 @@ def test_versions_of_newest_first_with_sent_count() -> None:
 
 
 def test_list_page(admin_client: Client) -> None:
-    DocumentVersionFactory.create(document__title="CV - Backend (EN)")
+    DocumentVersionFactory.create(document__title="CV - Backend (EN)", page_count=3)
     response = admin_client.get(reverse("documents:list"))
     assertContains(response, "CV - Backend (EN)")
+    assertContains(response, '<td class="text-right text-ink-muted">3</td>', html=False)
     assertContains(response, 'aria-current="page"')  # the sidebar item is active
 
 
@@ -208,6 +217,7 @@ def test_detail_page(admin_client: Client) -> None:
         original_filename="photo.png",
         mime_type="image/png",
         extracted_text="",
+        page_count=1,
     )
     ApplicationDocumentFactory.create(document_version=old)
     response = admin_client.get(document.get_absolute_url())
@@ -216,6 +226,8 @@ def test_detail_page(admin_client: Client) -> None:
     assertContains(response, "photo.png")
     assertContains(response, "Sent with 1 application")
     assertContains(response, "Becomes v3.")
+    assertContains(response, " · 1 page")  # under the file name...
+    assertNotContains(response, "1 pages")  # ...and singular for one page
     assertContains(response, "No text found.")
     assertContains(response, f"{reverse('documents:download', args=[latest.pk])}?preview=1")
     # Only the unsent version can be deleted; the document can't (one version was sent).
@@ -229,10 +241,15 @@ def test_detail_page_shows_the_text_and_no_preview_for_word(admin_client: Client
         mime_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         original_filename="cv.docx",
         extracted_text="Python Django SQL",
+        page_count=4,
     )
     response = admin_client.get(version.document.get_absolute_url())
     assertContains(response, "Show the text (3 words)")
+    assertContains(response, " · 4 pages")
+    # No preview link, but a disabled button that explains why.
     assertNotContains(response, "?preview=1")
+    # Written in the template itself (not a variable), so the ' is not escaped.
+    assertContains(response, "Word files can't be shown in the browser.")
     assertContains(response, "Delete this document?")
 
 

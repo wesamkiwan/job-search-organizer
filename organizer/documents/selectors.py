@@ -1,6 +1,6 @@
 """Read queries for documents (the write operations are in services.py)."""
 
-from django.db.models import Count, Max, Q, QuerySet
+from django.db.models import Count, Max, OuterRef, Q, QuerySet, Subquery
 
 from .models import Document, DocumentLanguage, DocumentType, DocumentVersion
 
@@ -11,8 +11,8 @@ def document_list(
     language: str = "",
     show_archived: bool = False,
 ) -> QuerySet[Document]:
-    """Documents grouped by type, A to Z, with their version count, last upload and the
-    number of applications they were sent with.
+    """Documents grouped by type, A to Z, with their version count, last upload, the pages
+    of their latest version and the number of applications they were sent with.
 
     The search also looks INSIDE the files (their extracted text) and at file names.
     """
@@ -25,6 +25,14 @@ def document_list(
             version_count=Count("versions", distinct=True),
             sent_count=Count("versions__sent_with__application", distinct=True),
             last_upload_at=Max("versions__created_at"),
+            # A subquery per row: "the page_count of this document's newest version".
+            # OuterRef("pk") refers to the document of the outer query (the row being
+            # built). [:1] = LIMIT 1, so the subquery returns one value.
+            latest_page_count=Subquery(
+                DocumentVersion.objects.filter(document=OuterRef("pk"))
+                .order_by("-version_number")
+                .values("page_count")[:1]
+            ),
         )
     )
     if not show_archived:

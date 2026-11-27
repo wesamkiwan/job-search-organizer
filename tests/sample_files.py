@@ -5,6 +5,7 @@ needs, and the test shows what is inside.
 """
 
 import io
+import re
 import zipfile
 
 import docx
@@ -50,8 +51,14 @@ def make_pdf(*pages: str) -> bytes:
     return out.getvalue()
 
 
-def make_docx(*paragraphs: str, table: list[list[str]] | None = None) -> bytes:
-    """A real Word file (made with python-docx) with these paragraphs and an optional table."""
+def make_docx(
+    *paragraphs: str, table: list[list[str]] | None = None, pages: int | None = 1
+) -> bytes:
+    """A real Word file (made with python-docx) with these paragraphs and an optional table.
+
+    pages: the page count written into the file's metadata (docProps/app.xml), as Word does
+    when it saves. None removes that metadata file, as some other programs do.
+    """
     document = docx.Document()
     for text in paragraphs:
         document.add_paragraph(text)
@@ -62,6 +69,29 @@ def make_docx(*paragraphs: str, table: list[list[str]] | None = None) -> bytes:
                 cell.text = value
     out = io.BytesIO()
     document.save(out)
+    return _set_word_pages(out.getvalue(), pages)
+
+
+def _set_word_pages(content: bytes, pages: int | None) -> bytes:
+    """Copy the ZIP with another <Pages> value (or without docProps/app.xml).
+
+    Removing the metadata file also removes the two places that point to it (the list of
+    parts in [Content_Types].xml and the relationship in _rels/.rels); otherwise the file
+    would be broken and python-docx would refuse to open it.
+    """
+    source = zipfile.ZipFile(io.BytesIO(content))
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as target:
+        for item in source.infolist():
+            data = source.read(item.filename)
+            if item.filename == "docProps/app.xml":
+                if pages is None:
+                    continue
+                data = re.sub(rb"<Pages>\d+</Pages>", b"<Pages>%d</Pages>" % pages, data)
+            elif pages is None and item.filename in {"[Content_Types].xml", "_rels/.rels"}:
+                # Drop the XML element that mentions docProps/app.xml.
+                data = re.sub(rb"<[^<>]*docProps/app\.xml[^<>]*/>", b"", data)
+            target.writestr(item, data)
     return out.getvalue()
 
 

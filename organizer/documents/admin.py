@@ -99,6 +99,7 @@ VERSION_READONLY_FIELDS = (
     "original_filename",
     "mime_type",
     "size_bytes",
+    "page_count",
     "sha256",
     "extracted_text",
     "created_at",
@@ -108,7 +109,14 @@ VERSION_READONLY_FIELDS = (
 
 @admin.register(DocumentVersion)
 class DocumentVersionAdmin(admin.ModelAdmin):
-    list_display = ("__str__", "original_filename", "mime_type", "size_bytes", "created_at")
+    list_display = (
+        "__str__",
+        "original_filename",
+        "mime_type",
+        "size_bytes",
+        "page_count",
+        "created_at",
+    )
     list_filter = ("mime_type", "document__document_type")
     search_fields = ("document__title", "original_filename", "change_notes")
     list_select_related = ("document",)

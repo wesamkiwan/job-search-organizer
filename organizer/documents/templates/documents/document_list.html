@@ -2,7 +2,7 @@
 {% comment %}
 The document library. Context: documents (from selectors.document_list), form
 (DocumentFilterForm: q, type, language, archived). Live search/filter with hx-select,
-like the company and contact lists. The search also finds words INSIDE the files.
+like the company and contact lists. The search also finds words INSIDE the files. "Pages" = pages of the latest version.
 {% endcomment %}
 
 {% block title %}Documents · Job Search Organizer{% endblock title %}
@@ -49,6 +49,7 @@ like the company and contact lists. The search also finds words INSIDE the files
               <th scope="col">Type</th>
               <th scope="col">Language</th>
               <th scope="col" class="text-right">Versions</th>
+              <th scope="col" class="text-right" title="Pages of the latest version">Pages</th>
               <th scope="col">Last upload</th>
               <th scope="col" class="text-right">Sent with</th>
             </tr>
@@ -68,6 +69,7 @@ like the company and contact lists. The search also finds words INSIDE the files
                 <td class="whitespace-nowrap text-ink-muted">{{ document.document_type.name }}</td>
                 <td class="whitespace-nowrap text-ink-muted">{{ document.get_language_display }}</td>
                 <td class="text-right text-ink-muted">{{ document.version_count }}</td>
+                <td class="text-right text-ink-muted">{{ document.latest_page_count|default:"—" }}</td>
                 <td class="whitespace-nowrap text-ink-muted">{{ document.last_upload_at|date:user_settings.date_format|default:"—" }}</td>
                 <td class="text-right whitespace-nowrap text-ink-muted">
                   {% if document.sent_count %}{{ document.sent_count }} application{{ document.sent_count|pluralize }}{% else %}—{% endif %}
