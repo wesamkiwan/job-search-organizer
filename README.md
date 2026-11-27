@@ -9,20 +9,25 @@ A personal, local-first Django application to organize a job search in Germany: 
 postings from StepStone, LinkedIn and any other source, track every application and the
 exact documents sent, and improve the search with a dynamic analytics dashboard.
 
-> **Status:** Phase 0 (foundation) is complete: project setup, quality tooling, CI, design
-> system, login and settings. Next up is [Phase 1](docs/06-roadmap.md): the application
-> tracker.
+> **Status:** Phase 1 (application tracker) is complete: applications with a timeline and
+> pipeline stages, a kanban board, companies and contacts. Next up is
+> [Phase 2](docs/06-roadmap.md): documents (which CV version was sent where).
 
 ## Features
 
 **Available now**
-- Login required on every page, with a custom user model
-- Settings page (home location, default currency, "ghosted" threshold, date format)
-- Responsive layout with sidebar, light and dark mode
-- Reusable UI components (buttons, cards, tables, form fields, modals, badges)
+- Applications: add, edit and track them through customizable pipeline stages (saved,
+  applied, screening, interviewing, offer, accepted, rejected, ghosted, withdrawn)
+- A timeline per application: stage changes, notes, calls and emails, with backdating
+- Application list with live search, filters (stage, status, priority, location, work
+  mode), sorting and your salary expectation next to the advertised range
+- Kanban board: drag applications between stages (mouse or touch)
+- Companies and contacts (recruiters, hiring managers, referrals) with their own pages
+- Business rules in a tested service layer (timeline, closing, outcomes stay consistent)
+- Login required on every page, settings (currency, date format, "ghosted" threshold),
+  light and dark mode, responsive layout, demo data command
 
 **Planned** (see the [roadmap](docs/06-roadmap.md))
-- Applications, companies and contacts with a timeline and kanban board
 - Document versions: know exactly which CV was sent where
 - Custom fields and saved table views
 - Analytics dashboard: funnel, response rates, sources, goals
