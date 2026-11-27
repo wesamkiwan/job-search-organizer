@@ -23,6 +23,10 @@ minor release while the project is in early development (0.x).
   pages per version), upload of new versions, edit, archive and delete.
 - Downloads and previews only through a login-protected view, under the original file
   name; files are never served as public media URLs.
+- "Documents sent" on the application page: record which versions you sent and when
+  (with a timeline entry), and remove a record made by mistake.
+- "Used in" on the document page: the applications each version was sent with, with
+  their company, date and stage.
 
 ## [0.2.0] - 2026-11-27
 

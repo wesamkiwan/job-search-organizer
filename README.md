@@ -11,8 +11,8 @@ exact documents sent, and improve the search with a dynamic analytics dashboard.
 
 > **Status:** Phase 1 (application tracker) is complete: applications with a timeline and
 > pipeline stages, a kanban board, companies and contacts.
-> [Phase 2](docs/06-roadmap.md) (documents) is in progress: the document library with
-> versions is done; next is recording which version was sent with which application.
+> [Phase 2](docs/06-roadmap.md) (documents) is complete as well: a document library with
+> versions, and a record of exactly which version was sent with which application.
 
 ## Features
 
@@ -26,12 +26,13 @@ exact documents sent, and improve the search with a dynamic analytics dashboard.
 - Companies and contacts (recruiters, hiring managers, referrals) with their own pages
 - Document library: CVs, cover letters and references with versions (PDF, Word, PNG,
   JPEG), duplicate detection, search inside the files, preview and private downloads
+- Which version was sent where: record the documents sent with each application, and
+  see for every version which applications it was used in
 - Business rules in a tested service layer (timeline, closing, outcomes stay consistent)
 - Login required on every page, settings (currency, date format, "ghosted" threshold),
   light and dark mode, responsive layout, demo data command
 
 **Planned** (see the [roadmap](docs/06-roadmap.md))
-- Attach document versions to applications: know exactly which CV was sent where
 - Custom fields and saved table views
 - Analytics dashboard: funnel, response rates, sources, goals
 - Import from URLs, a bookmarklet, job APIs and alert emails
