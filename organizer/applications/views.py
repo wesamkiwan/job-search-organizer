@@ -11,6 +11,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_POST
 
+from organizer.core.forms import form_errors_to_messages
+
 from . import services
 from .forms import (
     ApplicationFilterForm,
@@ -204,7 +206,7 @@ def application_change_stage(request: HttpRequest, pk: int) -> HttpResponse:
         else:  # runs only if there was no exception
             messages.success(request, f"Moved to “{data['stage']}”.")
     else:
-        _form_errors_to_messages(request, form)
+        form_errors_to_messages(request, form)
     return redirect(application)
 
 
@@ -227,7 +229,7 @@ def application_close(request: HttpRequest, pk: int) -> HttpResponse:
         else:
             messages.success(request, f"Application closed as “{data['stage']}”.")
     else:
-        _form_errors_to_messages(request, form)
+        form_errors_to_messages(request, form)
     return redirect(application)
 
 
@@ -250,7 +252,7 @@ def application_add_event(request: HttpRequest, pk: int) -> HttpResponse:
         else:
             messages.success(request, "Added to the timeline.")
     else:
-        _form_errors_to_messages(request, form)
+        form_errors_to_messages(request, form)
     return redirect(application)
 
 
@@ -261,11 +263,3 @@ def application_delete(request: HttpRequest, pk: int) -> HttpResponse:
     services.delete_application(application)
     messages.success(request, f"Application for “{title}” deleted. The job posting was kept.")
     return redirect("applications:list")
-
-
-def _form_errors_to_messages(request: HttpRequest, form: BaseForm) -> None:
-    """Show a small action form's errors as messages (the form lives in a card or dialog)."""
-    for field, errors in form.errors.items():
-        label = form.fields[field].label if field in form.fields else ""
-        for error in errors:
-            messages.error(request, f"{label}: {error}" if label else str(error))

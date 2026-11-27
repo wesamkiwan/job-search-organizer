@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% comment %}
+One document. Context:
+  document:    the Document
+  versions:    its versions, newest first, each with sent_count
+  latest:      the newest version (or None)
+  upload_form: VersionUploadForm (upload a new version)
+  is_sent:     True if any version was sent (then the document can't be deleted)
+Every action is a normal POST form that redirects back here (Post/Redirect/Get).
+{% endcomment %}
+
+{% block title %}{{ document.title }} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Document{% endblock page_title %}
+
+{% block content %}
+  <a href="{% url 'documents:list' %}" class="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+    <c-icon name="chevron-left" />All documents
+  </a>
+
+  {# --- Header ---------------------------------------------------------------------- #}
+  <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <p class="text-sm text-ink-muted">{{ document.document_type.name }} · {{ document.get_language_display }}</p>
+      <h2 class="mt-1 text-xl font-semibold tracking-tight">{{ document.title }}</h2>
+      {% if document.is_archived or document.tags.all %}
+        <div class="mt-2 flex flex-wrap items-center gap-1.5">
+          {% if document.is_archived %}<c-badge>Archived</c-badge>{% endif %}
+          {% for tag in document.tags.all %}<c-badge tone="{{ tag.color }}">{{ tag.name }}</c-badge>{% endfor %}
+        </div>
+      {% endif %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if latest %}
+        <c-button variant="secondary" href="{% url 'documents:download' latest.pk %}"><c-icon name="download" />Download latest</c-button>
+      {% endif %}
+      <c-button variant="secondary" href="{% url 'documents:edit' document.pk %}">Edit</c-button>
+      <c-button variant="danger" @click="document.getElementById('delete-dialog').showModal()">Delete…</c-button>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    {# --- Main column: versions + text ------------------------------------------------ #}
+    <div class="space-y-6 lg:col-span-2">
+      <c-card title="Versions" description="Every file you uploaded, newest first. A version never changes.">
+        {% if versions %}
+          <ul class="divide-y divide-line">
+            {% for version in versions %}
+              <li class="flex flex-wrap items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <div class="min-w-0">
+                  <p class="flex flex-wrap items-center gap-2 text-sm font-medium">
+                    <span class="font-mono">v{{ version.version_number }}</span>
+                    <span class="truncate">{{ version.original_filename }}</span>
+                    {% if version == latest %}<c-badge tone="accent">Latest</c-badge>{% endif %}
+                    {% if version.sent_count %}<c-badge tone="success">Sent with {{ version.sent_count }} application{{ version.sent_count|pluralize }}</c-badge>{% endif %}
+                  </p>
+                  <p class="mt-0.5 text-xs text-ink-subtle">
+                    {{ version.size_bytes|filesizeformat }} · uploaded {{ version.created_at|date:user_settings.date_format }}
+                  </p>
+                  {% if version.change_notes %}<p class="mt-1.5 text-sm whitespace-pre-line text-ink-muted">{{ version.change_notes }}</p>{% endif %}
+                </div>
+                <div class="flex shrink-0 gap-1">
+                  {% if version.can_preview %}
+                    {# target="_blank": the preview opens in a new tab, this page stays. #}
+                    <c-button size="sm" variant="ghost" href="{% url 'documents:download' version.pk %}?preview=1" target="_blank" title="Open in a new tab">
+                      <c-icon name="eye" /><span class="sr-only">Preview v{{ version.version_number }}</span>
+                    </c-button>
+                  {% endif %}
+                  <c-button size="sm" variant="ghost" href="{% url 'documents:download' version.pk %}" title="Download">
+                    <c-icon name="download" /><span class="sr-only">Download v{{ version.version_number }}</span>
+                  </c-button>
+                  {% if not version.sent_count %}
+                    <c-button size="sm" variant="ghost" title="Delete" @click="document.getElementById('delete-version-{{ version.pk }}').showModal()">
+                      <c-icon name="x" /><span class="sr-only">Delete v{{ version.version_number }}</span>
+                    </c-button>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-ink-muted">No files yet. Upload one on the right.</p>
+        {% endif %}
+      </c-card>
+
+      {% if latest %}
+        <c-card title="Text in the latest file" description="Found in v{{ latest.version_number }}. The search on the Documents page looks through it.">
+          {% if latest.extracted_text %}
+            {# <details>: a native "show more" toggle, no JavaScript needed. #}
+            <details>
+              <summary class="cursor-pointer text-sm font-medium text-accent hover:underline">
+                Show the text ({{ latest.extracted_text|wordcount }} words)
+              </summary>
+              <pre class="mt-3 max-h-96 overflow-auto rounded-md bg-canvas p-3 font-mono text-xs whitespace-pre-wrap text-ink-muted">{{ latest.extracted_text }}</pre>
+            </details>
+          {% else %}
+            <p class="text-sm text-ink-muted">
+              No text found. Images and scanned PDFs contain pictures of text, not text itself.
+            </p>
+          {% endif %}
+        </c-card>
+      {% endif %}
+    </div>
+
+    {# --- Side column: upload + details ----------------------------------------------- #}
+    <div class="space-y-6">
+      <c-card title="Upload a new version" description="Becomes v{% if latest %}{{ latest.version_number|add:1 }}{% else %}1{% endif %}. Older versions stay.">
+        <form method="post" action="{% url 'documents:upload_version' document.pk %}" enctype="multipart/form-data" class="space-y-4" novalidate>
+          {% csrf_token %}
+          {% for field in upload_form %}
+            {% include "partials/form_field.html" %}
+          {% endfor %}
+          <c-button type="submit" class="w-full"><c-icon name="upload" />Upload</c-button>
+        </form>
+      </c-card>
+
+      <c-card title="Details">
+        <dl class="divide-y divide-line">
+          {% include "partials/detail_row.html" with label="Type" value=document.document_type.name %}
+          {% include "partials/detail_row.html" with label="Language" value=document.get_language_display %}
+          {% include "partials/detail_row.html" with label="Added" value=document.created_at|date:user_settings.date_format %}
+        </dl>
+        {% if document.description %}
+          <p class="mt-3 border-t border-line pt-3 text-sm whitespace-pre-line text-ink-muted">{{ document.description }}</p>
+        {% endif %}
+      </c-card>
+    </div>
+  </div>
+
+  {# --- Dialogs ------------------------------------------------------------------------ #}
+  {% if is_sent %}
+    <c-modal id="delete-dialog" title="This document can't be deleted">
+      At least one of its versions was sent with an application, and that record must stay.
+      Archive it instead (Edit → Archived): it disappears from the list but keeps its history.
+    </c-modal>
+  {% else %}
+    <c-modal id="delete-dialog" title="Delete this document?" action="{% url 'documents:delete' document.pk %}">
+      {% csrf_token %}
+      All its versions and their files will be deleted. This cannot be undone.
+      <c-slot name="footer">
+        <c-button type="submit" variant="secondary" formmethod="dialog" formnovalidate>Cancel</c-button>
+        <c-button type="submit" variant="danger">Delete</c-button>
+      </c-slot>
+    </c-modal>
+  {% endif %}
+
+  {% for version in versions %}
+    {% if not version.sent_count %}
+      <c-modal id="delete-version-{{ version.pk }}" title="Delete version {{ version.version_number }}?" action="{% url 'documents:delete_version' version.pk %}">
+        {% csrf_token %}
+        “{{ version.original_filename }}” will be deleted. The other versions keep their numbers.
+        <c-slot name="footer">
+          <c-button type="submit" variant="secondary" formmethod="dialog" formnovalidate>Cancel</c-button>
+          <c-button type="submit" variant="danger">Delete</c-button>
+        </c-slot>
+      </c-modal>
+    {% endif %}
+  {% endfor %}
+{% endblock content %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% comment %}
+The document library. Context: documents (from selectors.document_list), form
+(DocumentFilterForm: q, type, language, archived). Live search/filter with hx-select,
+like the company and contact lists. The search also finds words INSIDE the files.
+{% endcomment %}
+
+{% block title %}Documents · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Documents{% endblock page_title %}
+
+{% block content %}
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <form method="get" role="search" class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center"
+          hx-get="{% url 'documents:list' %}" hx-trigger="input delay:300ms, change, submit"
+          hx-target="#document-results" hx-select="#document-results" hx-swap="outerHTML"
+          hx-push-url="true" hx-sync="this:replace">
+      <div class="relative sm:w-72">
+        <label for="id_q" class="sr-only">Search documents</label>
+        <c-icon name="search" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-subtle" />
+        <input id="id_q" name="q" type="search" value="{{ form.q.value|default_if_none:'' }}"
+               placeholder="Search titles and text in files" autocomplete="off" maxlength="100"
+               class="block h-9 w-full rounded-md border border-line-input bg-surface pr-3 pl-9 text-sm text-ink placeholder:text-ink-subtle focus-visible:border-accent focus-visible:outline-1 focus-visible:outline-offset-0">
+      </div>
+      <div class="sm:w-44">
+        <c-select label="Type" name="type" :options="form.type.field.choices"
+                  value="{{ form.type.value|default_if_none:'' }}" hide_label />
+      </div>
+      <div class="sm:w-40">
+        <c-select label="Language" name="language" :options="form.language.field.choices"
+                  value="{{ form.language.value|default_if_none:'' }}" hide_label />
+      </div>
+      <label class="inline-flex items-center gap-2 text-sm text-ink-muted">
+        <input type="checkbox" name="archived" value="on" {% if form.archived.value %}checked{% endif %} class="size-4 accent-accent">
+        Show archived
+      </label>
+    </form>
+    <c-button href="{% url 'documents:create' %}"><c-icon name="plus" />Add document</c-button>
+  </div>
+
+  <div id="document-results" aria-live="polite" class="mt-4">
+    {% if documents %}
+      <p class="mb-2 text-sm text-ink-muted">{{ documents|length }} document{{ documents|length|pluralize }}</p>
+      <c-card flush>
+        <c-table>
+          <thead>
+            <tr>
+              <th scope="col">Title</th>
+              <th scope="col">Type</th>
+              <th scope="col">Language</th>
+              <th scope="col" class="text-right">Versions</th>
+              <th scope="col">Last upload</th>
+              <th scope="col" class="text-right">Sent with</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for document in documents %}
+              <tr>
+                <td>
+                  <a href="{{ document.get_absolute_url }}" class="font-medium text-ink hover:text-accent hover:underline">{{ document.title }}</a>
+                  {% if document.is_archived or document.tags.all %}
+                    <div class="mt-1 flex flex-wrap gap-1">
+                      {% if document.is_archived %}<c-badge>Archived</c-badge>{% endif %}
+                      {% for tag in document.tags.all %}<c-badge tone="{{ tag.color }}">{{ tag.name }}</c-badge>{% endfor %}
+                    </div>
+                  {% endif %}
+                </td>
+                <td class="whitespace-nowrap text-ink-muted">{{ document.document_type.name }}</td>
+                <td class="whitespace-nowrap text-ink-muted">{{ document.get_language_display }}</td>
+                <td class="text-right text-ink-muted">{{ document.version_count }}</td>
+                <td class="whitespace-nowrap text-ink-muted">{{ document.last_upload_at|date:user_settings.date_format|default:"—" }}</td>
+                <td class="text-right whitespace-nowrap text-ink-muted">
+                  {% if document.sent_count %}{{ document.sent_count }} application{{ document.sent_count|pluralize }}{% else %}—{% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </c-table>
+      </c-card>
+    {% elif form.is_filtered %}
+      <c-empty-state icon="search" title="No documents match" description="Try other words or filters. The search also looks inside PDF and Word files.">
+        <c-button variant="secondary" href="{% url 'documents:list' %}">Clear filters</c-button>
+      </c-empty-state>
+    {% else %}
+      <c-empty-state icon="file-text" title="No documents yet"
+                     description="Upload your CVs, cover letters and references. Every new file becomes a version, so you always know what you sent.">
+        <c-button href="{% url 'documents:create' %}"><c-icon name="plus" />Add document</c-button>
+      </c-empty-state>
+    {% endif %}
+  </div>
+{% endblock content %}

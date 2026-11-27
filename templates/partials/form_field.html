@@ -9,6 +9,7 @@ from the field's widget:
   textarea               → <c-textarea>
   checkbox               → one checkbox with its label to the right (yes/no fields)
   checkboxselectmultiple → a row of checkbox "chips" (e.g. tags)
+  file                   → a file picker (the form needs enctype="multipart/form-data")
   everything else        → <c-field>, with the widget's HTML type (text, number, date, url, ...)
 field.html_name includes the form prefix ("posting-title"), so two forms on one page don't clash.
 {% endcomment %}
@@ -54,6 +55,25 @@ field.html_name includes the form prefix ("posting-title"), so two forms on one 
     {% endif %}
     {% if field.errors %}<p class="mt-1.5 text-sm text-danger">{{ field.errors.0 }}</p>{% endif %}
   </fieldset>
+
+{% elif field.widget_type == "file" %}
+  {# A file picker. The browser draws it; "file:" styles its "Choose file" button. #}
+  <div>
+    <label for="{{ field.auto_id }}" class="block text-sm font-medium">
+      {{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
+    </label>
+    <input id="{{ field.auto_id }}" name="{{ field.html_name }}" type="file"
+           accept="{{ field.field.widget.attrs.accept|default:'' }}"
+           {% if field.field.required %}required{% endif %}
+           {% if field.errors %}aria-invalid="true"{% endif %}
+           {% if field.help_text or field.errors %}aria-describedby="{{ field.auto_id }}_hint"{% endif %}
+           class="mt-1.5 block w-full cursor-pointer text-sm text-ink-muted file:mr-3 file:h-9 file:cursor-pointer file:rounded-md file:border file:border-line-strong file:bg-surface file:px-4 file:text-sm file:font-medium file:text-ink hover:file:bg-surface-muted">
+    {% if field.errors %}
+      <p id="{{ field.auto_id }}_hint" class="mt-1.5 text-sm text-danger">{{ field.errors.0 }}</p>
+    {% elif field.help_text %}
+      <p id="{{ field.auto_id }}_hint" class="mt-1.5 text-sm text-ink-subtle">{{ field.help_text }}</p>
+    {% endif %}
+  </div>
 
 {% else %}
   <c-field label="{{ field.label }}" name="{{ field.html_name }}"

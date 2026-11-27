@@ -3,6 +3,8 @@
 from typing import Any
 
 from django import forms
+from django.contrib import messages
+from django.http import HttpRequest
 from django.utils import timezone
 
 from .models import UserSettings
@@ -39,3 +41,12 @@ class DateTimeInput(forms.DateTimeInput):
 def now_for_input() -> str:
     """The current local time in the format a datetime-local input expects."""
     return timezone.localtime().strftime("%Y-%m-%dT%H:%M")
+
+
+def form_errors_to_messages(request: HttpRequest, form: forms.BaseForm) -> None:
+    """Show a small action form's errors as messages (the form lives in a card or dialog,
+    and the view redirects back to the page instead of showing the form again)."""
+    for field, errors in form.errors.items():
+        label = form.fields[field].label if field in form.fields else ""
+        for error in errors:
+            messages.error(request, f"{label}: {error}" if label else str(error))
