@@ -42,6 +42,7 @@ LOCAL_APPS = [
     "organizer.sources",
     "organizer.jobs",
     "organizer.applications",
+    "organizer.documents",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -163,6 +164,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"  # where "collectstatic" gathers files fo
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"  # uploaded documents (never committed to git)
+
+# Our own setting (any UPPERCASE name in a settings file works): the largest document
+# file that can be uploaded, in bytes. Read with django.conf.settings.DOCUMENT_MAX_UPLOAD_SIZE.
+DOCUMENT_MAX_UPLOAD_SIZE = env.int("DOCUMENT_MAX_UPLOAD_SIZE", default=10 * 1024 * 1024)  # 10 MB
 
 
 # --- Tailwind CSS (django-tailwind-cli) ---------------------------------------------

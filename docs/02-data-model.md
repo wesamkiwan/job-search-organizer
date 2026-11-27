@@ -130,7 +130,7 @@ Follow-ups and to-dos: `title`, `application (nullable)`, `due_on`, `done_at`, `
 ## Documents
 
 ### DocumentType
-Configurable. Defaults: CV (*Lebenslauf*), Cover letter (*Anschreiben*), Reference
+Configurable (`name`, `description`, `order`). Defaults: CV (*Lebenslauf*), Cover letter (*Anschreiben*), Reference
 (*Arbeitszeugnis*), Certificate (*Zertifikat*), Portfolio, Photo, Other.
 
 ### Document

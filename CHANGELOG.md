@@ -8,6 +8,15 @@ minor release while the project is in early development (0.x).
 
 ## [Unreleased]
 
+### Added
+
+- Documents with versions: document types (7 defaults), documents, immutable versions and a
+  record of which version was sent with which application, each with an admin.
+- Upload checks (PDF, DOCX, PNG, JPEG; by extension and file content; 10 MB limit) and
+  duplicate detection by SHA-256 fingerprint.
+- Sent versions can't be deleted; sending a version adds an entry to the application's
+  timeline.
+
 ## [0.2.0] - 2026-11-27
 
 Phase 1: the application tracker.
