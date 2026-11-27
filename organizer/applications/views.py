@@ -12,6 +12,8 @@ from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_POST
 
 from organizer.core.forms import form_errors_to_messages
+from organizer.documents.forms import SendDocumentForm
+from organizer.documents.selectors import sent_documents_for
 
 from . import services
 from .forms import (
@@ -175,6 +177,10 @@ def application_detail(request: HttpRequest, pk: int) -> HttpResponse:
         "stage_form": StageChangeForm(application=application),
         "close_form": CloseForm(),
         "event_form": EventForm(),
+        # From the documents app, through its own selectors and forms (cross-app reads
+        # go through the app that owns the data).
+        "sent_documents": sent_documents_for(application),
+        "send_document_form": SendDocumentForm(application=application),
     }
     return render(request, "applications/application_detail.html", context)
 

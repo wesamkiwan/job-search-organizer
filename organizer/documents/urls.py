@@ -12,4 +12,7 @@ urlpatterns = [
     path("<int:pk>/versions/", views.version_upload, name="upload_version"),
     path("versions/<int:pk>/download/", views.version_download, name="download"),
     path("versions/<int:pk>/delete/", views.version_delete, name="delete_version"),
+    # Sent with an application (the forms are on the application's detail page).
+    path("sent/new/<int:application_pk>/", views.send_document, name="send"),
+    path("sent/<int:pk>/remove/", views.remove_sent_document, name="remove_sent"),
 ]

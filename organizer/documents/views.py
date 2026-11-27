@@ -6,11 +6,12 @@ from django.http import FileResponse, HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from organizer.applications.models import Application
 from organizer.core.forms import form_errors_to_messages
 
 from . import services
-from .forms import DocumentFilterForm, DocumentForm, VersionUploadForm
-from .models import Document, DocumentVersion
+from .forms import DocumentFilterForm, DocumentForm, SendDocumentForm, VersionUploadForm
+from .models import ApplicationDocument, Document, DocumentVersion
 from .selectors import document_list, versions_of
 from .services import DocumentError
 
@@ -132,6 +133,39 @@ def document_delete(request: HttpRequest, pk: int) -> HttpResponse:
         return redirect(document)
     messages.success(request, f"“{title}” and its files deleted.")
     return redirect("documents:list")
+
+
+# --- Sent with an application (the form lives on the application's page) -----------------
+
+
+@require_POST
+def send_document(request: HttpRequest, application_pk: int) -> HttpResponse:
+    """Record that a version was sent with an application; back to the application."""
+    application = get_object_or_404(Application, pk=application_pk)
+    form = SendDocumentForm(request.POST, application=application)
+    if form.is_valid():
+        version = form.cleaned_data["version"]
+        try:
+            services.attach_version(application, version, sent_at=form.cleaned_data["sent_at"])
+        except DocumentError as error:
+            messages.error(request, str(error))
+        else:
+            messages.success(request, f"“{version}” recorded as sent.")
+    else:
+        form_errors_to_messages(request, form)
+    return redirect(application)
+
+
+@require_POST
+def remove_sent_document(request: HttpRequest, pk: int) -> HttpResponse:
+    sent = get_object_or_404(
+        ApplicationDocument.objects.select_related("application", "document_version__document"),
+        pk=pk,
+    )
+    application, version = sent.application, sent.document_version
+    services.detach_version(sent)
+    messages.success(request, f"“{version}” is no longer recorded as sent.")
+    return redirect(application)
 
 
 # --- Download ------------------------------------------------------------------------------
