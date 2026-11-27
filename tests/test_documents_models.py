@@ -204,6 +204,6 @@ def test_admin_shows_counts(admin_client: Client) -> None:
     assertContains(response, "Lebenslauf")
 
 
-def test_admin_cannot_add_versions_directly(admin_client: Client) -> None:
+def test_admin_add_version_page_is_a_small_upload_form(admin_client: Client) -> None:
     response = admin_client.get(reverse("admin:documents_documentversion_add"))
-    assert response.status_code == 403
+    assert list(response.context["adminform"].form.fields) == ["document", "file", "change_notes"]
