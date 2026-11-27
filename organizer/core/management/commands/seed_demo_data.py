@@ -194,7 +194,13 @@ def create_demo_data(rng: random.Random) -> int:
             custom_data=DEMO,
         )
         posting.tags.set(rng.sample(tags, k=rng.randrange(0, 3)))
-        application = _play(scenario, posting, rng, now)
+        # Your salary expectation: somewhere in or a bit above the ad's range, in whole
+        # thousands. Only when you actually applied (a saved job has no expectation yet).
+        expectation = None
+        if scenario.steps[0][0] != "Saved":
+            middle = (posting.salary_min + posting.salary_max) // 2  # type: ignore[operator]
+            expectation = round(middle + rng.randrange(-3, 8) * 1000, -3)
+        application = _play(scenario, posting, rng, now, expectation)
         if number == 6:
             application.referred_by = recruiter
             application.save()
@@ -217,7 +223,11 @@ def create_demo_data(rng: random.Random) -> int:
 
 
 def _play(
-    scenario: Scenario, posting: JobPosting, rng: random.Random, now: datetime
+    scenario: Scenario,
+    posting: JobPosting,
+    rng: random.Random,
+    now: datetime,
+    salary_expectation: int | None,
 ) -> Application:
     """Create the application and replay its story through the services (backdated)."""
 
@@ -230,6 +240,7 @@ def _play(
         stage=PipelineStage.objects.get(name=first_stage),
         priority=rng.choice(["low", "medium", "medium", "high"]),
         interest=rng.choice([None, 3, 4, 5]),
+        salary_expectation=salary_expectation,
         custom_data=DEMO,
     )
     services.create_application(application, occurred_at=days_ago(first_day))

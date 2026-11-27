@@ -37,6 +37,7 @@ SORT_FIELDS: dict[str, F | Func] = {
     "company": Coalesce(Lower("posting__company__name"), Lower("posting__company_name_raw")),
     "stage": F("stage__order"),
     "applied": F("applied_on"),
+    "salary": F("salary_expectation"),
     "updated": F("updated_at"),
 }
 DEFAULT_SORT = "-updated"

@@ -21,6 +21,7 @@ contents of #application-results). Same context as application_list.html.
           {% include "applications/partials/sort_header.html" with label="Company" key="company" %}
           {% include "applications/partials/sort_header.html" with label="Stage" key="stage" %}
           {% include "applications/partials/sort_header.html" with label="Applied" key="applied" first="desc" %}
+          {% include "applications/partials/sort_header.html" with label="Salary" key="salary" first="desc" %}
           <th scope="col">Location</th>
           {% include "applications/partials/sort_header.html" with label="Updated" key="updated" first="desc" %}
         </tr>
@@ -48,6 +49,17 @@ contents of #application-results). Same context as application_list.html.
                   {{ application.applied_on|date:user_settings.date_format }}
                 {% else %}
                   <span class="text-ink-subtle">Not yet</span>
+                {% endif %}
+              </td>
+              {# Your salary expectation; below it, the range from the job ad (if the ad named one). #}
+              <td class="whitespace-nowrap">
+                {% if application.salary_expectation %}
+                  {{ application.salary_expectation_display }}
+                {% else %}
+                  <span class="text-ink-subtle">—</span>
+                {% endif %}
+                {% if posting.salary_display %}
+                  <div class="mt-0.5 text-xs text-ink-subtle">Ad: {{ posting.salary_display }}</div>
                 {% endif %}
               </td>
               <td class="text-ink-muted">

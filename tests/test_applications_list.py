@@ -133,6 +133,13 @@ def test_sort_by_stage_uses_stage_order() -> None:
     assert titles(ApplicationFilters(sort="stage")) == ["saved", "offer"]
 
 
+def test_sort_by_salary_expectation_empty_last() -> None:
+    ApplicationFactory.create(posting__title="none")
+    ApplicationFactory.create(posting__title="low", salary_expectation=55_000)
+    ApplicationFactory.create(posting__title="high", salary_expectation=75_000)
+    assert titles(ApplicationFilters(sort="-salary")) == ["high", "low", "none"]
+
+
 # A sort value that isn't in the whitelist falls back to the default (no error).
 def test_unknown_sort_falls_back_to_default() -> None:
     ApplicationFactory.create_batch(2)
@@ -160,6 +167,16 @@ def test_list_page_shows_applications(admin_client: Client) -> None:
     assertContains(response, "1 application")
     # The sidebar link is active on this page.
     assertContains(response, f'href="{LIST_URL}" aria-current="page"')
+
+
+# The Salary column: your expectation, and the range from the ad below it.
+def test_list_shows_salary_expectation_and_ad_range(admin_client: Client) -> None:
+    ApplicationFactory.create(
+        salary_expectation=65_000, posting__salary_min=55_000, posting__salary_max=70_000
+    )
+    response = admin_client.get(LIST_URL)
+    assertContains(response, "65,000 EUR")
+    assertContains(response, "Ad: 55,000-70,000 EUR per year")
 
 
 # The URL's query string drives the filters (bookmarkable).

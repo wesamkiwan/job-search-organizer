@@ -27,6 +27,9 @@ def test_creates_demo_data_through_the_services() -> None:
     # 4 rejected + 2 ghosted + 1 withdrawn + 1 accepted.
     assert not demo_apps.filter(events__isnull=True).exists()
     assert demo_apps.filter(closed_at__isnull=False).count() == 8
+    # Applied ones have a salary expectation; only saved ones don't.
+    without = demo_apps.filter(salary_expectation__isnull=True)
+    assert set(without.values_list("stage__name", flat=True)) == {"Saved"}
     assert JobPosting.objects.filter(custom_data__demo=True, application__isnull=True).count() == 2
     # Backdated: the oldest event is weeks ago, not today.
     oldest = ApplicationEvent.objects.order_by("occurred_at").first()
