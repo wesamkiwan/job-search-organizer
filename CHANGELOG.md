@@ -16,11 +16,11 @@ minor release while the project is in early development (0.x).
   duplicate detection by SHA-256 fingerprint.
 - Sent versions can't be deleted; sending a version adds an entry to the application's
   timeline.
-- Text extraction from PDF and Word files at upload, and an `extract_document_text`
-  command for existing versions.
+- Text and page count read from PDF and Word files at upload (page counts also for
+  images), and an `extract_document_text` command for existing versions.
 - Document library pages: list with search (also inside the files) and filters, add a
-  document with its first file, detail page with the version history, upload of new
-  versions, edit, archive and delete.
+  document with its first file, detail page with the version history (size, date and
+  pages per version), upload of new versions, edit, archive and delete.
 - Downloads and previews only through a login-protected view, under the original file
   name; files are never served as public media URLs.
 
