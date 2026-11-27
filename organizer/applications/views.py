@@ -100,7 +100,9 @@ def application_create(request: HttpRequest) -> HttpResponse:
     prefix= keeps their fields apart in the HTML ("posting-title", "application-notes").
     Both are validated; only if BOTH are valid is anything saved, in one transaction.
     """
-    posting_form = PostingForm(request.POST or None, prefix="posting")
+    # ?company=<name> (from a company page's "Add application" button) pre-fills the company.
+    initial = {"company_name": request.GET.get("company", "")}
+    posting_form = PostingForm(request.POST or None, prefix="posting", initial=initial)
     application_form = ApplicationForm(request.POST or None, prefix="application")
 
     if request.method == "POST" and _all_valid(posting_form, application_form):

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% comment %}
+One company. Context: company, applications (via its postings), contacts.
+{% endcomment %}
+
+{% block title %}{{ company.name }} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Company{% endblock page_title %}
+
+{% block content %}
+  <a href="{% url 'companies:list' %}" class="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+    <c-icon name="chevron-left" />All companies
+  </a>
+
+  <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <p class="text-sm text-ink-muted">
+        {{ company.industry|default:"Company" }}{% if company.headquarters %} · {{ company.headquarters }}{% endif %}
+      </p>
+      <h2 class="mt-1 text-xl font-semibold tracking-tight">{{ company.name }}</h2>
+      {% if company.is_recruiting_agency %}<div class="mt-2"><c-badge>Recruiting agency</c-badge></div>{% endif %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if company.careers_url %}<c-button variant="secondary" href="{{ company.careers_url }}" target="_blank" rel="noopener noreferrer">Careers page</c-button>{% endif %}
+      {% if company.website %}<c-button variant="secondary" href="{{ company.website }}" target="_blank" rel="noopener noreferrer">Website</c-button>{% endif %}
+      <c-button variant="secondary" href="{% url 'companies:edit' company.slug %}">Edit</c-button>
+      <c-button variant="danger" @click="document.getElementById('delete-dialog').showModal()">Delete…</c-button>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="space-y-6 lg:col-span-2">
+      <c-card title="Applications" description="Your applications to this company.">
+        <c-slot name="actions">
+          {# urlencode: the name may contain spaces or "&", which must be escaped in a URL. #}
+          <c-button size="sm" variant="secondary" href="{% url 'applications:create' %}?company={{ company.name|urlencode }}">
+            <c-icon name="plus" />Add
+          </c-button>
+        </c-slot>
+        {% if applications %}
+          <ul class="divide-y divide-line">
+            {% for application in applications %}
+              <li class="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <div class="min-w-0">
+                  <a href="{{ application.get_absolute_url }}" class="text-sm font-medium hover:text-accent hover:underline">{{ application.posting.title }}</a>
+                  <p class="text-xs text-ink-subtle">
+                    {% if application.applied_on %}Applied {{ application.applied_on|date:user_settings.date_format }}{% else %}Not applied yet{% endif %}
+                  </p>
+                </div>
+                <c-badge tone="{{ application.stage.color }}" dot>{{ application.stage.name }}</c-badge>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-ink-muted">No applications yet.</p>
+        {% endif %}
+      </c-card>
+
+      <c-card title="Contacts" description="People you know there.">
+        <c-slot name="actions">
+          <c-button size="sm" variant="secondary" href="{% url 'contacts:create' %}?company={{ company.pk }}">
+            <c-icon name="plus" />Add
+          </c-button>
+        </c-slot>
+        {% if contacts %}
+          <ul class="divide-y divide-line">
+            {% for contact in contacts %}
+              <li class="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <div class="min-w-0">
+                  <a href="{{ contact.get_absolute_url }}" class="text-sm font-medium hover:text-accent hover:underline">{{ contact.full_name }}</a>
+                  <p class="text-xs text-ink-subtle">{{ contact.job_title|default:contact.get_kind_display }}</p>
+                </div>
+                {% if contact.email %}<a href="mailto:{{ contact.email }}" class="text-sm text-ink-muted hover:text-accent">{{ contact.email }}</a>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-ink-muted">No contacts yet.</p>
+        {% endif %}
+      </c-card>
+
+      {% if company.description %}
+        <c-card title="About"><p class="text-sm whitespace-pre-line text-ink-muted">{{ company.description }}</p></c-card>
+      {% endif %}
+    </div>
+
+    <div class="space-y-6">
+      <c-card title="Details">
+        <dl class="divide-y divide-line">
+          {% include "partials/detail_row.html" with label="Size" value=company.get_size_display %}
+          {% include "partials/detail_row.html" with label="Headquarters" value=company.headquarters %}
+          {% include "partials/detail_row.html" with label="Other locations" value=company.locations %}
+          {% if company.rating %}
+            {% include "partials/detail_row.html" with label="Your rating" value=company.rating|stringformat:"d"|add:"/5" %}
+          {% endif %}
+          {% if company.linkedin_url %}
+            <div class="flex justify-between gap-4 py-2 text-sm">
+              <dt class="text-ink-muted">LinkedIn</dt>
+              <dd><a href="{{ company.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Open page</a></dd>
+            </div>
+          {% endif %}
+        </dl>
+        {% if not company.size and not company.headquarters and not company.locations and not company.rating and not company.linkedin_url %}
+          <p class="text-sm text-ink-muted">No details yet. <a href="{% url 'companies:edit' company.slug %}" class="text-accent hover:underline">Add some</a>.</p>
+        {% endif %}
+      </c-card>
+
+      {% if company.notes %}
+        <c-card title="Notes"><p class="text-sm whitespace-pre-line text-ink-muted">{{ company.notes }}</p></c-card>
+      {% endif %}
+    </div>
+  </div>
+
+  <c-modal id="delete-dialog" title="Delete this company?" action="{% url 'companies:delete' company.slug %}">
+    {% csrf_token %}
+    Its job postings keep the company name, and its contacts stay (without a company).
+    This cannot be undone.
+    <c-slot name="footer">
+      <c-button type="submit" variant="secondary" formmethod="dialog" formnovalidate>Cancel</c-button>
+      <c-button type="submit" variant="danger">Delete</c-button>
+    </c-slot>
+  </c-modal>
+{% endblock content %}

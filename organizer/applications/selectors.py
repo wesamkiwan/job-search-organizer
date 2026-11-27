@@ -12,6 +12,7 @@ from django.db.models import F, Func, OrderBy, Prefetch, Q, QuerySet
 from django.db.models.functions import Coalesce, Lower
 from django.utils import timezone
 
+from organizer.companies.models import Company
 from organizer.jobs.models import JobPosting, RemoteType, Tag
 
 from .models import Application, PipelineStage, Priority
@@ -109,6 +110,15 @@ def application_cities() -> list[str]:
         .distinct()
     )
     return list(cities)
+
+
+def applications_for_company(company: Company) -> QuerySet[Application]:
+    """A company's applications, newest activity first, with what a row shows."""
+    return (
+        Application.objects.filter(posting__company=company)
+        .select_related("posting", "stage")
+        .order_by("-updated_at", "-pk")
+    )
 
 
 # --- Kanban board ------------------------------------------------------------------------

@@ -11,6 +11,10 @@ from django.utils.text import slugify
 from organizer.core.fields import HttpsURLField
 from organizer.core.models import CustomDataModel, TimeStampedModel
 
+# Slugs that are page names under /companies/ (e.g. /companies/new/ adds a company), so no
+# company may get them: a company called "New" gets the slug "new-2".
+RESERVED_SLUGS = frozenset({"new"})
+
 
 class CompanySize(models.TextChoices):
     # Format: CONSTANT = "value stored in the database", "label shown to the user"
@@ -82,15 +86,17 @@ class Company(TimeStampedModel, CustomDataModel):
         # Different names can give the same slug ("A&B" and "A B" both -> "ab"/"a-b").
         base = slugify(self.name)[:200] or "company"  # name of only symbols -> ""
         slug, number = base, 2
-        while Company.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+        while slug in RESERVED_SLUGS or (
+            Company.objects.filter(slug=slug).exclude(pk=self.pk).exists()
+        ):
             slug = f"{base}-{number}"
             number += 1
         return slug
 
     def get_absolute_url(self) -> str:
-        # Django's convention: "where does this object live?" The admin uses it for its
-        # "View on site" button. The page itself comes in step 1.9; until then: admin.
-        return reverse("admin:companies_company_change", args=[self.pk])
+        # Django's convention: "where does this object live?" (redirect(obj), the admin's
+        # "View on site" button). Company pages use the readable slug in the URL.
+        return reverse("companies:detail", args=[self.slug])
 
 
 class ContactKind(models.TextChoices):
@@ -143,4 +149,4 @@ class Contact(TimeStampedModel, CustomDataModel):
         return f"{self.first_name} {self.last_name}".strip()
 
     def get_absolute_url(self) -> str:
-        return reverse("admin:companies_contact_change", args=[self.pk])
+        return reverse("contacts:detail", args=[self.pk])

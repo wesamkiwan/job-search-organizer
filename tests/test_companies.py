@@ -159,7 +159,7 @@ def test_contact_without_company() -> None:
     assert Contact.objects.get(pk=contact.pk).company is None
 
 
-# get_absolute_url points to the edit page (until the real pages exist in step 1.9).
+# get_absolute_url opens the detail page of the company and of the contact.
 def test_get_absolute_url_opens_the_object(admin_client: Client) -> None:
     contact = ContactFactory.create()
     for obj in (contact, contact.company):

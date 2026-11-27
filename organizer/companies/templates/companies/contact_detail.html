@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% comment %}
+One contact. Context: contact, referrals (applications this person referred you to).
+{% endcomment %}
+
+{% block title %}{{ contact.full_name }} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Contact{% endblock page_title %}
+
+{% block content %}
+  <a href="{% url 'contacts:list' %}" class="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+    <c-icon name="chevron-left" />All contacts
+  </a>
+
+  <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <p class="text-sm text-ink-muted">
+        {{ contact.job_title|default:contact.get_kind_display }}{% if contact.company %} at <a href="{{ contact.company.get_absolute_url }}" class="hover:text-accent hover:underline">{{ contact.company.name }}</a>{% endif %}
+      </p>
+      <h2 class="mt-1 text-xl font-semibold tracking-tight">{{ contact.full_name }}</h2>
+      <div class="mt-2"><c-badge>{{ contact.get_kind_display }}</c-badge></div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if contact.email %}<c-button variant="secondary" href="mailto:{{ contact.email }}">Send email</c-button>{% endif %}
+      <c-button variant="secondary" href="{% url 'contacts:edit' contact.pk %}">Edit</c-button>
+      <c-button variant="danger" @click="document.getElementById('delete-dialog').showModal()">Delete…</c-button>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    <div class="space-y-6 lg:col-span-2">
+      {% if contact.notes %}
+        <c-card title="Notes"><p class="text-sm whitespace-pre-line text-ink-muted">{{ contact.notes }}</p></c-card>
+      {% endif %}
+      <c-card title="Referrals" description="Applications this person referred you to.">
+        {% if referrals %}
+          <ul class="divide-y divide-line">
+            {% for application in referrals %}
+              <li class="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+                <a href="{{ application.get_absolute_url }}" class="text-sm font-medium hover:text-accent hover:underline">{{ application.posting.title }}</a>
+                <c-badge tone="{{ application.stage.color }}" dot>{{ application.stage.name }}</c-badge>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-sm text-ink-muted">None.</p>
+        {% endif %}
+      </c-card>
+    </div>
+
+    <c-card title="Contact details">
+      <dl class="divide-y divide-line">
+        {% include "partials/detail_row.html" with label="Email" value=contact.email %}
+        {% include "partials/detail_row.html" with label="Phone" value=contact.phone %}
+        {% if contact.linkedin_url %}
+          <div class="flex justify-between gap-4 py-2 text-sm">
+            <dt class="text-ink-muted">LinkedIn</dt>
+            <dd><a href="{{ contact.linkedin_url }}" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">Open profile</a></dd>
+          </div>
+        {% endif %}
+        {% include "partials/detail_row.html" with label="Last contacted" value=contact.last_contacted_at|date:user_settings.date_format %}
+      </dl>
+      {% if not contact.email and not contact.phone and not contact.linkedin_url and not contact.last_contacted_at %}
+        <p class="text-sm text-ink-muted">No details yet.</p>
+      {% endif %}
+    </c-card>
+  </div>
+
+  <c-modal id="delete-dialog" title="Delete this contact?" action="{% url 'contacts:delete' contact.pk %}">
+    {% csrf_token %}
+    Applications this person referred you to are kept. This cannot be undone.
+    <c-slot name="footer">
+      <c-button type="submit" variant="secondary" formmethod="dialog" formnovalidate>Cancel</c-button>
+      <c-button type="submit" variant="danger">Delete</c-button>
+    </c-slot>
+  </c-modal>
+{% endblock content %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% comment %}Add or edit a company. Context: form (CompanyForm), company (None when adding).{% endcomment %}
+
+{% block title %}{% if company %}Edit {{ company.name }}{% else %}Add company{% endif %} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}{% if company %}Edit company{% else %}Add company{% endif %}{% endblock page_title %}
+
+{% block content %}
+  {% if company %}
+    {% include "partials/simple_form_page.html" with card_title="Company" submit_label="Save changes" cancel_url=company.get_absolute_url %}
+  {% else %}
+    {% url "companies:list" as list_url %}
+    {% include "partials/simple_form_page.html" with card_title="Company" submit_label="Add company" cancel_url=list_url %}
+  {% endif %}
+{% endblock content %}
