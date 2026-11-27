@@ -23,6 +23,12 @@ from organizer.applications.models import (
     Task,
 )
 from organizer.companies.models import Company, Contact
+from organizer.documents.models import (
+    ApplicationDocument,
+    Document,
+    DocumentType,
+    DocumentVersion,
+)
 from organizer.jobs.models import JobPosting, Tag
 from organizer.sources.models import Source
 
@@ -156,3 +162,64 @@ class TaskFactory(DjangoModelFactory[Task]):
         model = Task
 
     title = factory.Sequence(lambda n: f"Task {n}")
+
+
+# --- documents -------------------------------------------------------------------------
+
+# The smallest file that starts like a real PDF ("%PDF-" is how PDF files begin).
+PDF_BYTES = b"%PDF-1.4\n%test\n"
+
+
+def next_version_number(version: DocumentVersion) -> int:
+    """1 for the first version of a document, then 2, 3, ..."""
+    return version.document.versions.count() + 1
+
+
+class DocumentTypeFactory(DjangoModelFactory[DocumentType]):
+    class Meta:
+        model = DocumentType
+        # DocumentTypeFactory.create(name="CV") returns the default type from the migration.
+        django_get_or_create = ("name",)
+
+    name = factory.Sequence(lambda n: f"Type {n}")
+
+
+class DocumentFactory(DjangoModelFactory[Document]):
+    class Meta:
+        model = Document
+        skip_postgeneration_save = True
+
+    title = factory.Sequence(lambda n: f"CV - Backend Developer {n}")
+    document_type = factory.SubFactory(DocumentTypeFactory, name="CV")
+
+    @factory.post_generation
+    def tags(self, create: bool, extracted: list[Tag] | None, **kwargs: object) -> None:
+        if create and extracted:
+            self.tags.add(*extracted)
+
+
+class DocumentVersionFactory(DjangoModelFactory[DocumentVersion]):
+    """Saves the row directly, WITHOUT the services (no file checks). Good for tests of
+    reading data; tests of uploading call services.upload_version() instead."""
+
+    class Meta:
+        model = DocumentVersion
+
+    document = factory.SubFactory(DocumentFactory)
+    version_number = factory.LazyAttribute(next_version_number)
+    # factory-boy's FileField makes a real (small) file in the storage. In tests the
+    # storage is a temporary folder (see the media_root fixture in tests/conftest.py).
+    file = factory.django.FileField(data=PDF_BYTES, filename="cv.pdf")
+    # Sequence: a different made-up "hash" for every version (the column is unique).
+    sha256 = factory.Sequence(lambda n: f"{n:064x}")
+    size_bytes = len(PDF_BYTES)
+    mime_type = "application/pdf"
+    original_filename = "cv.pdf"
+
+
+class ApplicationDocumentFactory(DjangoModelFactory[ApplicationDocument]):
+    class Meta:
+        model = ApplicationDocument
+
+    application = factory.SubFactory(ApplicationFactory)
+    document_version = factory.SubFactory(DocumentVersionFactory)
