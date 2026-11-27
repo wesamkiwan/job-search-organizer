@@ -8,12 +8,14 @@ is pinned and reviewed in git. Files are used as published; do not edit them.
 |---|---|---|---|---|
 | [HTMX](https://htmx.org) | 2.0.11 | `htmx/htmx.min.js` | 0BSD (`htmx/LICENSE`) | `https://cdn.jsdelivr.net/npm/htmx.org@2.0.11/dist/htmx.min.js` |
 | [Alpine.js](https://alpinejs.dev) | 3.17.5 | `alpinejs/alpine.min.js` | MIT (`alpinejs/LICENSE.md`) | `https://cdn.jsdelivr.net/npm/alpinejs@3.17.5/dist/cdn.min.js` |
+| [SortableJS](https://sortablejs.github.io/Sortable/) | 1.15.7 | `sortablejs/sortable.min.js` | MIT (`sortablejs/LICENSE`) | npm package `sortablejs@1.15.7` (`Sortable.min.js`), integrity checked against the npm registry |
 
 SHA-256 checksums (to verify a file was not changed):
 
 ```text
 d6fdc75f204e6bdefa99b69bf1e6d4ac69b8a364f77929f45c13476b4000f717  htmx/htmx.min.js
 b4036e9e9ac22fa6f6ae1ba292e015e1f3e9c85d0d79e73e4c8eb9bb139b522e  alpinejs/alpine.min.js
+bf4241bc73fef7f11c59a283a69fe8051cdd31c6d8ff5a2b9ba219e7831fcf76  sortablejs/sortable.min.js
 ```
 
 ## Updating a library

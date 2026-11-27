@@ -3,10 +3,10 @@
 from typing import Any, ClassVar
 
 from django import forms
-from django.utils import timezone
 
 from organizer.companies.models import Company
 from organizer.companies.services import find_or_create_company
+from organizer.core.forms import DateInput, DateTimeInput, now_for_input
 from organizer.core.models import UserSettings
 from organizer.jobs.models import JobPosting, RemoteType
 from organizer.sources.models import Source
@@ -22,30 +22,6 @@ from .models import (
     StageCategory,
 )
 from .selectors import DEFAULT_SORT, ApplicationFilters, Status, application_cities
-
-# --- Widgets ---------------------------------------------------------------------------
-# Django's DateInput renders <input type="text">. With type="date" the browser shows its
-# own date picker. The value must then be in ISO format (2026-11-27), whatever the
-# display format in Settings is; the browser shows it in the user's local style.
-
-
-class DateInput(forms.DateInput):
-    input_type = "date"
-
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(format="%Y-%m-%d", **kwargs)
-
-
-class DateTimeInput(forms.DateTimeInput):
-    input_type = "datetime-local"  # date + time picker, e.g. 2026-11-27T14:05
-
-    def __init__(self, **kwargs: Any) -> None:
-        super().__init__(format="%Y-%m-%dT%H:%M", **kwargs)
-
-
-def now_for_input() -> str:
-    """The current local time in the format a datetime-local input expects."""
-    return timezone.localtime().strftime("%Y-%m-%dT%H:%M")
 
 
 class ApplicationFilterForm(forms.Form):

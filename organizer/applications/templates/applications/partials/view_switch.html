@@ -1,0 +1,10 @@
+{% comment %}
+Switch between the two views of the applications: List and Board.
+  active: "list" or "board"
+{% endcomment %}
+<nav aria-label="View" class="inline-flex rounded-md border border-line-strong bg-surface p-0.5 text-sm">
+  <a href="{% url 'applications:list' %}" {% if active == "list" %}aria-current="page"{% endif %}
+     class="rounded px-3 py-1 {% if active == 'list' %}bg-surface-muted font-medium text-ink{% else %}text-ink-muted hover:text-ink{% endif %}">List</a>
+  <a href="{% url 'applications:board' %}" {% if active == "board" %}aria-current="page"{% endif %}
+     class="rounded px-3 py-1 {% if active == 'board' %}bg-surface-muted font-medium text-ink{% else %}text-ink-muted hover:text-ink{% endif %}">Board</a>
+</nav>

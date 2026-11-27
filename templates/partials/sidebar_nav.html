@@ -11,8 +11,8 @@
   <ul class="space-y-0.5">
     <li>{% include "partials/nav_item.html" with label="Dashboard" icon="layout-dashboard" url_name="core:home" %}</li>
     <li>{% include "partials/nav_item.html" with label="Applications" icon="briefcase-business" url_name="applications:list" section="applications" %}</li>
-    <li>{% include "partials/nav_item.html" with label="Companies" icon="building-2" %}</li>
-    <li>{% include "partials/nav_item.html" with label="Contacts" icon="users" %}</li>
+    <li>{% include "partials/nav_item.html" with label="Companies" icon="building-2" url_name="companies:list" section="companies" %}</li>
+    <li>{% include "partials/nav_item.html" with label="Contacts" icon="users" url_name="contacts:list" section="contacts" %}</li>
     <li>{% include "partials/nav_item.html" with label="Documents" icon="file-text" %}</li>
   </ul>
 

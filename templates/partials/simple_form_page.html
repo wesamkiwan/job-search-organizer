@@ -1,0 +1,25 @@
+{% comment %}
+The body of a simple "add / edit" page: one form in a card, fields in two columns
+(form.wide_fields span both), errors, Cancel + Save buttons.
+  {% include "partials/simple_form_page.html" with card_title="Company" submit_label="Save" cancel_url=... %}
+Expects `form` in the context.
+{% endcomment %}
+<form method="post" class="max-w-3xl space-y-6" novalidate>
+  {% csrf_token %}
+  {% for error in form.non_field_errors %}<c-alert tone="danger">{{ error }}</c-alert>{% endfor %}
+
+  <c-card title="{{ card_title }}">
+    <div class="grid gap-5 sm:grid-cols-2">
+      {% for field in form %}
+        <div {% if field.name in form.wide_fields %}class="sm:col-span-2"{% endif %}>
+          {% include "partials/form_field.html" %}
+        </div>
+      {% endfor %}
+    </div>
+  </c-card>
+
+  <div class="flex justify-end gap-2">
+    <c-button variant="secondary" href="{{ cancel_url }}">Cancel</c-button>
+    <c-button type="submit">{{ submit_label }}</c-button>
+  </div>
+</form>

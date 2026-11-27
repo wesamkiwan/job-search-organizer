@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+{% comment %}
+The kanban board. Context:
+  columns:     list of BoardColumn (stage + its applications), in stage order
+  closed_days: closed applications are shown for this many days
+Dragging is done by static/js/board.js (SortableJS). Without JavaScript the board is still
+readable, and every card links to its detail page, which has the stage form.
+{% endcomment %}
+
+{% block title %}Board · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Applications{% endblock page_title %}
+
+{% block scripts %}
+  <script src="{% static 'vendor/sortablejs/sortable.min.js' %}" defer></script>
+  <script src="{% static 'js/board.js' %}" defer></script>
+{% endblock scripts %}
+
+{% block content %}
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center gap-4">
+      {% include "applications/partials/view_switch.html" with active="board" %}
+      <p class="text-sm text-ink-muted">
+        Drag a card to another column to change its stage. Closed applications stay here for {{ closed_days }} days.
+      </p>
+    </div>
+    <c-button href="{% url 'applications:create' %}"><c-icon name="plus" />Add application</c-button>
+  </div>
+
+  {# The board scrolls sideways when the columns don't fit. #}
+  <div data-board data-csrf-token="{{ csrf_token }}" class="mt-6 flex items-start gap-3 overflow-x-auto pb-4">
+    {% for column in columns %}
+      <section data-column aria-labelledby="column-{{ column.stage.pk }}"
+               class="flex w-64 shrink-0 flex-col rounded-lg border border-line bg-canvas">
+        <header class="flex items-center justify-between gap-2 border-b border-line px-3 py-2.5">
+          <h2 id="column-{{ column.stage.pk }}">
+            <c-badge tone="{{ column.stage.color }}" dot>{{ column.stage.name }}</c-badge>
+          </h2>
+          <span data-count class="text-xs text-ink-subtle tabular-nums">{{ column.applications|length }}</span>
+        </header>
+
+        {# data-stage-id: board.js sends it when a card is dropped here. min-h: empty columns stay droppable. #}
+        <ul data-cards data-stage-id="{{ column.stage.pk }}" class="flex min-h-20 flex-col gap-2 p-2">
+          {% for application in column.applications %}
+            {% with posting=application.posting %}
+              <li data-card data-move-url="{% url 'applications:move' application.pk %}"
+                  class="cursor-grab rounded-md border border-line bg-surface p-3 active:cursor-grabbing">
+                <a href="{{ application.get_absolute_url }}" class="text-sm font-medium text-ink hover:text-accent hover:underline">
+                  {{ posting.title }}
+                </a>
+                <p class="mt-0.5 text-xs text-ink-muted">{{ posting.company_display|default:"Unknown company" }}</p>
+                <div class="mt-2 flex items-center justify-between gap-2 text-xs text-ink-subtle">
+                  <span>
+                    {% if application.applied_on %}Applied {{ application.applied_on|date:user_settings.date_format }}{% else %}Not applied yet{% endif %}
+                  </span>
+                  {% if application.priority == "high" %}<c-badge tone="warning">High</c-badge>{% endif %}
+                </div>
+              </li>
+            {% endwith %}
+          {% endfor %}
+        </ul>
+        <p data-empty class="px-3 pb-3 text-xs text-ink-subtle" {% if column.applications %}hidden{% endif %}>No applications</p>
+      </section>
+    {% endfor %}
+  </div>
+
+  {# Messages after a move; role="status" + aria-live: screen readers read them out. #}
+  <div id="board-status" role="status" aria-live="polite" hidden data-tone="success"
+       class="fixed right-4 bottom-4 z-40 max-w-sm rounded-md px-4 py-2.5 text-sm shadow-popover data-[tone=danger]:bg-danger-soft data-[tone=danger]:text-danger data-[tone=success]:bg-success-soft data-[tone=success]:text-success"></div>
+{% endblock content %}

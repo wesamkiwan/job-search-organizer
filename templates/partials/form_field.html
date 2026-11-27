@@ -7,6 +7,7 @@ field is a BoundField (a form field + its current value + its errors). It picks 
 from the field's widget:
   select                 → <c-select>
   textarea               → <c-textarea>
+  checkbox               → one checkbox with its label to the right (yes/no fields)
   checkboxselectmultiple → a row of checkbox "chips" (e.g. tags)
   everything else        → <c-field>, with the widget's HTML type (text, number, date, url, ...)
 field.html_name includes the form prefix ("posting-title"), so two forms on one page don't clash.
@@ -21,6 +22,18 @@ field.html_name includes the form prefix ("posting-title"), so two forms on one 
               value="{{ field.value|default_if_none:'' }}" help="{{ field.help_text }}"
               error="{{ field.errors.0|default:'' }}" :required="field.field.required"
               rows="{{ field.field.widget.attrs.rows|default:4 }}" />
+
+{% elif field.widget_type == "checkbox" %}
+  <div class="flex items-start gap-2.5 sm:pt-7">
+    <input id="{{ field.auto_id }}" name="{{ field.html_name }}" type="checkbox"
+           {% if field.value %}checked{% endif %}
+           {% if field.help_text %}aria-describedby="{{ field.auto_id }}_hint"{% endif %}
+           class="mt-0.5 size-4 shrink-0 accent-accent">
+    <div>
+      <label for="{{ field.auto_id }}" class="text-sm font-medium">{{ field.label }}</label>
+      {% if field.help_text %}<p id="{{ field.auto_id }}_hint" class="text-sm text-ink-subtle">{{ field.help_text }}</p>{% endif %}
+    </div>
+  </div>
 
 {% elif field.widget_type == "checkboxselectmultiple" %}
   <fieldset>

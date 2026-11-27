@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% comment %}
+All companies. Context: companies (with application/contact counts), search.
+Live search with HTMX's hx-select: the request returns this whole page, and HTMX takes only
+#company-results out of it and puts it in place. Simpler than a separate partial template
+(the application list uses that technique instead, because it returns less HTML).
+{% endcomment %}
+
+{% block title %}Companies · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Companies{% endblock page_title %}
+
+{% block content %}
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <form method="get" role="search" class="relative w-full sm:w-80"
+          hx-get="{% url 'companies:list' %}" hx-trigger="input delay:300ms, submit"
+          hx-target="#company-results" hx-select="#company-results" hx-swap="outerHTML"
+          hx-push-url="true" hx-sync="this:replace">
+      <label for="id_q" class="sr-only">Search companies</label>
+      <c-icon name="search" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-subtle" />
+      <input id="id_q" name="q" type="search" value="{{ search }}" placeholder="Search name, industry, location"
+             autocomplete="off" maxlength="100"
+             class="block h-9 w-full rounded-md border border-line-input bg-surface pr-3 pl-9 text-sm text-ink placeholder:text-ink-subtle focus-visible:border-accent focus-visible:outline-1 focus-visible:outline-offset-0">
+    </form>
+    <c-button href="{% url 'companies:create' %}"><c-icon name="plus" />Add company</c-button>
+  </div>
+
+  <div id="company-results" aria-live="polite" class="mt-4">
+    {% if companies %}
+      <p class="mb-2 text-sm text-ink-muted">{{ companies|length }} compan{{ companies|length|pluralize:"y,ies" }}</p>
+      <c-card flush>
+        <c-table>
+          <thead>
+            <tr>
+              <th scope="col">Company</th>
+              <th scope="col">Location</th>
+              <th scope="col">Size</th>
+              <th scope="col">Rating</th>
+              <th scope="col">Applications</th>
+              <th scope="col">Contacts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for company in companies %}
+              <tr>
+                <td>
+                  <a href="{{ company.get_absolute_url }}" class="font-medium text-ink hover:text-accent hover:underline">{{ company.name }}</a>
+                  {% if company.is_recruiting_agency %}<c-badge class="ml-1">Agency</c-badge>{% endif %}
+                  {% if company.industry %}<div class="text-xs text-ink-subtle">{{ company.industry }}</div>{% endif %}
+                </td>
+                <td class="text-ink-muted">{{ company.headquarters|default:"—" }}</td>
+                <td class="whitespace-nowrap text-ink-muted">{{ company.get_size_display|default:"—" }}</td>
+                <td class="text-ink-muted">{% if company.rating %}{{ company.rating }}/5{% else %}—{% endif %}</td>
+                <td class="whitespace-nowrap">
+                  {{ company.application_count }}
+                  {% if company.open_application_count %}<span class="text-xs text-ink-subtle">({{ company.open_application_count }} open)</span>{% endif %}
+                </td>
+                <td>{{ company.contact_count }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </c-table>
+      </c-card>
+    {% elif search %}
+      <c-empty-state icon="search" title="No companies match" description="Try a different search.">
+        <c-button variant="secondary" href="{% url 'companies:list' %}">Clear search</c-button>
+      </c-empty-state>
+    {% else %}
+      <c-empty-state icon="building-2" title="No companies yet"
+                     description="Companies are added automatically when you add an application, or you can add one here.">
+        <c-button href="{% url 'companies:create' %}"><c-icon name="plus" />Add company</c-button>
+      </c-empty-state>
+    {% endif %}
+  </div>
+{% endblock content %}

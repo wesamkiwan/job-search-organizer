@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% comment %}Add or edit a contact. Context: form (ContactForm), contact (None when adding).{% endcomment %}
+
+{% block title %}{% if contact %}Edit {{ contact }}{% else %}Add contact{% endif %} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}{% if contact %}Edit contact{% else %}Add contact{% endif %}{% endblock page_title %}
+
+{% block content %}
+  {% if contact %}
+    {% include "partials/simple_form_page.html" with card_title="Contact" submit_label="Save changes" cancel_url=contact.get_absolute_url %}
+  {% else %}
+    {% url "contacts:list" as list_url %}
+    {% include "partials/simple_form_page.html" with card_title="Contact" submit_label="Add contact" cancel_url=list_url %}
+  {% endif %}
+{% endblock content %}

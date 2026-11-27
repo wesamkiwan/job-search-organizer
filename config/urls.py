@@ -7,5 +7,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("organizer.accounts.urls")),
     path("applications/", include("organizer.applications.urls")),
+    path("companies/", include("organizer.companies.urls")),
+    path("contacts/", include("organizer.companies.contact_urls")),
     path("", include("organizer.core.urls")),
 ]

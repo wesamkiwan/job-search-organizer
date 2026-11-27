@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% comment %}
+All contacts. Context: contacts, form (ContactFilterForm: q, kind).
+Live search/filter with hx-select, like the company list.
+{% endcomment %}
+
+{% block title %}Contacts · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Contacts{% endblock page_title %}
+
+{% block content %}
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <form method="get" role="search" class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"
+          hx-get="{% url 'contacts:list' %}" hx-trigger="input delay:300ms, change, submit"
+          hx-target="#contact-results" hx-select="#contact-results" hx-swap="outerHTML"
+          hx-push-url="true" hx-sync="this:replace">
+      <div class="relative sm:w-72">
+        <label for="id_q" class="sr-only">Search contacts</label>
+        <c-icon name="search" class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-subtle" />
+        <input id="id_q" name="q" type="search" value="{{ form.q.value|default_if_none:'' }}"
+               placeholder="Search name, email, company" autocomplete="off" maxlength="100"
+               class="block h-9 w-full rounded-md border border-line-input bg-surface pr-3 pl-9 text-sm text-ink placeholder:text-ink-subtle focus-visible:border-accent focus-visible:outline-1 focus-visible:outline-offset-0">
+      </div>
+      <div class="sm:w-52">
+        <c-select label="Kind" name="kind" :options="form.kind.field.choices"
+                  value="{{ form.kind.value|default_if_none:'' }}" hide_label />
+      </div>
+    </form>
+    <c-button href="{% url 'contacts:create' %}"><c-icon name="plus" />Add contact</c-button>
+  </div>
+
+  <div id="contact-results" aria-live="polite" class="mt-4">
+    {% if contacts %}
+      <p class="mb-2 text-sm text-ink-muted">{{ contacts|length }} contact{{ contacts|length|pluralize }}</p>
+      <c-card flush>
+        <c-table>
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Company</th>
+              <th scope="col">Kind</th>
+              <th scope="col">Email</th>
+              <th scope="col">Last contacted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for contact in contacts %}
+              <tr>
+                <td>
+                  <a href="{{ contact.get_absolute_url }}" class="font-medium text-ink hover:text-accent hover:underline">{{ contact.full_name }}</a>
+                  {% if contact.job_title %}<div class="text-xs text-ink-subtle">{{ contact.job_title }}</div>{% endif %}
+                </td>
+                <td>
+                  {% if contact.company %}
+                    <a href="{{ contact.company.get_absolute_url }}" class="text-ink-muted hover:text-accent hover:underline">{{ contact.company.name }}</a>
+                  {% else %}<span class="text-ink-subtle">—</span>{% endif %}
+                </td>
+                <td class="whitespace-nowrap text-ink-muted">{{ contact.get_kind_display }}</td>
+                <td>{% if contact.email %}<a href="mailto:{{ contact.email }}" class="text-ink-muted hover:text-accent">{{ contact.email }}</a>{% else %}<span class="text-ink-subtle">—</span>{% endif %}</td>
+                <td class="whitespace-nowrap text-ink-muted">{{ contact.last_contacted_at|date:user_settings.date_format|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </c-table>
+      </c-card>
+    {% elif form.q.value or form.kind.value %}
+      <c-empty-state icon="search" title="No contacts match" description="Try a different search or kind.">
+        <c-button variant="secondary" href="{% url 'contacts:list' %}">Clear filters</c-button>
+      </c-empty-state>
+    {% else %}
+      <c-empty-state icon="users" title="No contacts yet"
+                     description="Recruiters, hiring managers and people who refer you. Keep track of who you talked to.">
+        <c-button href="{% url 'contacts:create' %}"><c-icon name="plus" />Add contact</c-button>
+      </c-empty-state>
+    {% endif %}
+  </div>
+{% endblock content %}

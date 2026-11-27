@@ -4,11 +4,15 @@ Views, the dashboard and exports reuse these, so "which applications match?" is 
 the same way everywhere, and the queries are tuned in one place (no N+1).
 """
 
-from dataclasses import dataclass
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import timedelta
 
 from django.db.models import F, Func, OrderBy, Prefetch, Q, QuerySet
 from django.db.models.functions import Coalesce, Lower
+from django.utils import timezone
 
+from organizer.companies.models import Company
 from organizer.jobs.models import JobPosting, RemoteType, Tag
 
 from .models import Application, PipelineStage, Priority
@@ -106,6 +110,47 @@ def application_cities() -> list[str]:
         .distinct()
     )
     return list(cities)
+
+
+def applications_for_company(company: Company) -> QuerySet[Application]:
+    """A company's applications, newest activity first, with what a row shows."""
+    return (
+        Application.objects.filter(posting__company=company)
+        .select_related("posting", "stage")
+        .order_by("-updated_at", "-pk")
+    )
+
+
+# --- Kanban board ------------------------------------------------------------------------
+
+# Closed applications stay on the board for this many days, then only the list shows them.
+BOARD_CLOSED_DAYS = 30
+
+
+@dataclass
+class BoardColumn:
+    stage: PipelineStage
+    applications: list[Application] = field(default_factory=list)
+
+
+def board_columns(closed_within_days: int = BOARD_CLOSED_DAYS) -> list[BoardColumn]:
+    """One column per stage (in stage order), each with its applications.
+
+    Two queries in total, however many stages and cards: all stages, and all cards
+    (grouped by stage in Python), instead of one query per column.
+    """
+    recently = timezone.now() - timedelta(days=closed_within_days)
+    applications = (
+        Application.objects.filter(is_archived=False)
+        .filter(Q(closed_at__isnull=True) | Q(closed_at__gte=recently))
+        .select_related("posting__company")
+        .order_by("-updated_at", "-pk")  # most recently active first
+    )
+    # defaultdict(list): a dict that creates an empty list for a key it hasn't seen yet.
+    by_stage: defaultdict[int, list[Application]] = defaultdict(list)
+    for application in applications:
+        by_stage[application.stage_id].append(application)
+    return [BoardColumn(stage, by_stage[stage.pk]) for stage in PipelineStage.objects.all()]
 
 
 def _filter_status(applications: QuerySet[Application], status: str) -> QuerySet[Application]:
