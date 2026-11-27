@@ -1,9 +1,11 @@
 """Recording which document versions were sent with an application (step 2.5)."""
 
+import importlib
 from datetime import datetime, timedelta
 
 import pytest
 from django import forms
+from django.apps import apps as django_apps
 from django.db import connection
 from django.test import Client
 from django.test.utils import CaptureQueriesContext
@@ -11,7 +13,7 @@ from django.urls import reverse
 from django.utils import timezone
 from pytest_django.asserts import assertContains, assertNotContains
 
-from organizer.applications.models import EventKind
+from organizer.applications.models import Application, ApplicationEvent, EventKind
 from organizer.core.models import UserSettings
 from organizer.documents import services
 from organizer.documents.forms import SendDocumentForm
@@ -267,3 +269,60 @@ def test_used_in_needs_the_same_queries_for_any_number_of_versions(
         ApplicationDocumentFactory.create_batch(2, document_version=version)
 
     assert count_queries(big.pk) == count_queries(small.pk)
+
+
+# --- migration 0005: backfill the event links of older records ---------------------------
+
+# A module name can't start with a digit in an import statement, so importlib loads it.
+backfill = importlib.import_module(
+    "organizer.documents.migrations.0005_link_sent_records_to_events"
+).link_sent_records_to_events
+
+
+def old_style_send(application: Application, when: datetime) -> ApplicationDocument:
+    """What attach_version() wrote before migration 0004: a record + event, NOT linked."""
+    ApplicationEvent.objects.create(
+        application=application, kind=EventKind.DOCUMENT_SENT, occurred_at=when
+    )
+    return ApplicationDocumentFactory.create(application=application, sent_at=when)
+
+
+def test_backfill_links_the_one_matching_event() -> None:
+    application = ApplicationFactory.create()
+    when = timezone.now() - timedelta(days=3)
+    sent = old_style_send(application, when)
+    # Distractors: a note at the same time, and a "sent" event at another time.
+    ApplicationEvent.objects.create(application=application, kind=EventKind.NOTE, occurred_at=when)
+    ApplicationEvent.objects.create(
+        application=application, kind=EventKind.DOCUMENT_SENT, occurred_at=when - timedelta(1)
+    )
+
+    backfill(django_apps, None)  # the real app registry stands in for the migration's
+
+    sent.refresh_from_db()
+    assert sent.event is not None
+    assert (sent.event.kind, sent.event.occurred_at) == (EventKind.DOCUMENT_SENT, when)
+
+
+def test_backfill_does_not_guess_when_ambiguous() -> None:
+    # Two documents recorded at the same moment: two records, two identical events.
+    application = ApplicationFactory.create()
+    when = timezone.now()
+    first = old_style_send(application, when)
+    second = old_style_send(application, when)
+    backfill(django_apps, None)
+    first.refresh_from_db()
+    second.refresh_from_db()
+    assert first.event is None and second.event is None
+
+
+def test_backfill_skips_linked_records_and_events() -> None:
+    linked = services.attach_version(ApplicationFactory.create(), DocumentVersionFactory.create())
+    # An old record at the same time as the linked event: that event is taken.
+    orphan = ApplicationDocumentFactory.create(
+        application=linked.application, sent_at=linked.sent_at
+    )
+    backfill(django_apps, None)
+    orphan.refresh_from_db()
+    assert orphan.event is None
+    assert ApplicationDocument.objects.get(pk=linked.pk).event_id == linked.event_id
