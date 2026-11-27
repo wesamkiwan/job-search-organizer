@@ -1,0 +1,10 @@
+{% comment %}
+One label/value row in a description list (<dl>). Shows nothing if value is empty.
+  {% include "partials/detail_row.html" with label="Applied" value=application.applied_on|date:"d.m.Y" %}
+{% endcomment %}
+{% if value %}
+  <div class="flex justify-between gap-4 py-2 text-sm">
+    <dt class="text-ink-muted">{{ label }}</dt>
+    <dd class="text-right">{{ value }}</dd>
+  </div>
+{% endif %}

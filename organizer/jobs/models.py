@@ -193,5 +193,19 @@ class JobPosting(TimeStampedModel, CustomDataModel):
             return self.company.name  # type: ignore[union-attr]
         return self.company_name_raw
 
+    @property
+    def salary_display(self) -> str:
+        """The salary range as text: "55,000-70,000 EUR per year", "from 55,000 EUR ...", ""."""
+        low, high = self.salary_min, self.salary_max
+        if low and high:
+            amount = f"{low:,}-{high:,}" if low != high else f"{low:,}"  # :, = thousands
+        elif low:
+            amount = f"from {low:,}"
+        elif high:
+            amount = f"up to {high:,}"
+        else:
+            return ""
+        return f"{amount} {self.salary_currency} {self.get_salary_period_display()}"
+
     def get_absolute_url(self) -> str:
         return reverse("admin:jobs_jobposting_change", args=[self.pk])

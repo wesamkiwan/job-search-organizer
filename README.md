@@ -71,6 +71,20 @@ Open http://127.0.0.1:8000/ and log in with the user from step 4.
 The first `tailwind runserver` downloads the Tailwind CSS command-line tool once (pinned
 version, no Node.js needed).
 
+**Optional: demo data.** To try the app with made-up example applications (invented
+companies, backdated histories), run:
+
+```bash
+uv run python manage.py seed_demo_data          # add ~20 demo applications
+uv run python manage.py seed_demo_data --reset  # remove them again and recreate them
+```
+
+Demo rows are marked, so `--reset` never touches your own data. The command only runs with
+`DEBUG` on.
+
+**Windows:** if printing in the Django shell fails with `UnicodeEncodeError`, switch Python
+to UTF-8 mode once with `setx PYTHONUTF8 1` and restart the terminal.
+
 ## Development
 
 ### Checks

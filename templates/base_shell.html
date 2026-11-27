@@ -24,6 +24,7 @@ The bare HTML page that every page shares: <head> (theme, CSS, scripts) and <bod
     {% tailwind_css %}
     {# defer: download in parallel, run after the HTML is parsed (doesn't block the page). #}
     <script src="{% static 'js/theme.js' %}" defer></script>
+    <script src="{% static 'js/clock.js' %}" defer></script>
     <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
     <script src="{% static 'vendor/alpinejs/alpine.min.js' %}" defer></script>
   </head>

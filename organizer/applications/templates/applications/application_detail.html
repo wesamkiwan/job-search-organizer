@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% comment %}
+One application. Context:
+  application, posting: the Application and its JobPosting
+  events:     the timeline, newest first
+  tasks:      the application's tasks
+  stage_form: StageChangeForm (move to another stage)
+  close_form: CloseForm (in the "Close application" dialog)
+  event_form: EventForm (add a note, call, email, ... to the timeline)
+Every action is a normal POST form that redirects back here (Post/Redirect/Get).
+{% endcomment %}
+
+{% block title %}{{ posting.title }} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Application{% endblock page_title %}
+
+{% block content %}
+  <a href="{% url 'applications:list' %}" class="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+    <c-icon name="chevron-left" />All applications
+  </a>
+
+  {# --- Header ---------------------------------------------------------------------- #}
+  <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+    <div class="min-w-0">
+      <p class="text-sm text-ink-muted">
+        {{ posting.company_display|default:"Unknown company" }}{% if posting.city %} · {{ posting.city }}{% endif %}{% if posting.remote_type %} · {{ posting.get_remote_type_display }}{% endif %}
+      </p>
+      <h2 class="mt-1 text-xl font-semibold tracking-tight">{{ posting.title }}</h2>
+      <div class="mt-2 flex flex-wrap items-center gap-1.5">
+        <c-badge tone="{{ application.stage.color }}" dot>{{ application.stage.name }}</c-badge>
+        {% if application.is_closed %}<c-badge>Closed</c-badge>{% endif %}
+        {% if application.priority == "high" %}<c-badge tone="warning">High priority</c-badge>{% endif %}
+        {% for tag in application.tags.all %}<c-badge tone="{{ tag.color }}">{{ tag.name }}</c-badge>{% endfor %}
+      </div>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if posting.url %}
+        {# rel="noopener noreferrer": the opened site can't control this tab or see where you came from. #}
+        <c-button variant="secondary" href="{{ posting.url }}" target="_blank" rel="noopener noreferrer">Open job ad</c-button>
+      {% endif %}
+      <c-button variant="secondary" href="{% url 'applications:edit' application.pk %}">Edit</c-button>
+      <c-button variant="danger" @click="document.getElementById('delete-dialog').showModal()">Delete…</c-button>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-3">
+    {# --- Main column: timeline ---------------------------------------------------- #}
+    <div class="space-y-6 lg:col-span-2">
+      <c-card title="Timeline" description="Everything that happened, newest first.">
+        <ol class="space-y-5">
+          {% for event in events %}
+            <li class="relative flex gap-3">
+              <span aria-hidden="true" class="mt-1.5 size-2 shrink-0 rounded-full {% if event.kind == 'stage_change' %}bg-accent{% else %}bg-line-strong{% endif %}"></span>
+              <div class="min-w-0">
+                <p class="text-sm font-medium">
+                  {{ event.summary|default:event.get_kind_display }}
+                  {% if event.kind == "stage_change" and event.to_stage %}
+                    <c-badge tone="{{ event.to_stage.color }}" class="ml-1">{{ event.to_stage.name }}</c-badge>
+                  {% endif %}
+                </p>
+                <p class="mt-0.5 text-xs text-ink-subtle">
+                  {{ event.get_kind_display }} ·
+                  <time datetime="{{ event.occurred_at|date:'c' }}">{{ event.occurred_at|date:user_settings.date_format }}, {{ event.occurred_at|date:"H:i" }}</time>
+                </p>
+                {% if event.details %}<p class="mt-1.5 text-sm whitespace-pre-line text-ink-muted">{{ event.details }}</p>{% endif %}
+              </div>
+            </li>
+          {% empty %}
+            <li class="text-sm text-ink-muted">Nothing yet.</li>
+          {% endfor %}
+        </ol>
+      </c-card>
+
+      <c-card title="Add to the timeline" description="A note, call, email or anything else worth remembering.">
+        <form method="post" action="{% url 'applications:add_event' application.pk %}" novalidate>
+          {% csrf_token %}
+          <div class="grid gap-4 sm:grid-cols-2">
+            {% include "partials/form_field.html" with field=event_form.kind %}
+            {% include "partials/form_field.html" with field=event_form.occurred_at %}
+            <div class="sm:col-span-2">{% include "partials/form_field.html" with field=event_form.summary %}</div>
+            <div class="sm:col-span-2">{% include "partials/form_field.html" with field=event_form.details %}</div>
+          </div>
+          <div class="mt-4 flex justify-end"><c-button type="submit" variant="secondary">Add</c-button></div>
+        </form>
+      </c-card>
+
+      {% if posting.description_text %}
+        <c-card title="Job description">
+          <div class="text-sm whitespace-pre-line text-ink-muted">{{ posting.description_text }}</div>
+        </c-card>
+      {% endif %}
+    </div>
+
+    {# --- Side column: stage, details, tasks ------------------------------------- #}
+    <div class="space-y-6">
+      <c-card title="Stage">
+        {% if application.is_closed %}
+          <dl class="mb-4 divide-y divide-line">
+            {% include "partials/detail_row.html" with label="Closed on" value=application.closed_at|date:user_settings.date_format %}
+            {% include "partials/detail_row.html" with label="Got as far as" value=application.outcome_stage.name %}
+            {% include "partials/detail_row.html" with label="Reason" value=application.get_rejection_reason_display %}
+          </dl>
+          {% if application.rejection_details %}<p class="mb-4 text-sm text-ink-muted">{{ application.rejection_details }}</p>{% endif %}
+        {% endif %}
+
+        <form method="post" action="{% url 'applications:change_stage' application.pk %}" class="space-y-4" novalidate>
+          {% csrf_token %}
+          {% include "partials/form_field.html" with field=stage_form.stage %}
+          {% include "partials/form_field.html" with field=stage_form.occurred_at %}
+          {% include "partials/form_field.html" with field=stage_form.note %}
+          <c-button type="submit" class="w-full">Move</c-button>
+        </form>
+
+        {% if not application.is_closed %}
+          <c-button variant="secondary" class="mt-2 w-full"
+                    @click="document.getElementById('close-dialog').showModal()">Close application…</c-button>
+        {% endif %}
+      </c-card>
+
+      <c-card title="Details">
+        <dl class="divide-y divide-line">
+          {% include "partials/detail_row.html" with label="Applied" value=application.applied_on|date:user_settings.date_format %}
+          {% include "partials/detail_row.html" with label="Channel" value=application.get_channel_display %}
+          {% include "partials/detail_row.html" with label="Source" value=posting.source.name %}
+          {% include "partials/detail_row.html" with label="Priority" value=application.get_priority_display %}
+          {% include "partials/detail_row.html" with label="Interest" value=application.interest %}
+          {% include "partials/detail_row.html" with label="Follow up on" value=application.follow_up_on|date:user_settings.date_format %}
+          {% include "partials/detail_row.html" with label="Referred by" value=application.referred_by.full_name %}
+          {% include "partials/detail_row.html" with label="Salary (ad)" value=posting.salary_display %}
+          {% include "partials/detail_row.html" with label="Your expectation" value=application.salary_expectation_display %}
+          {% include "partials/detail_row.html" with label="Employment" value=posting.get_employment_type_display %}
+          {% include "partials/detail_row.html" with label="Contract" value=posting.get_contract_type_display %}
+          {% include "partials/detail_row.html" with label="Seniority" value=posting.get_seniority_display %}
+          {% include "partials/detail_row.html" with label="Earliest start" value=application.earliest_start_date|date:user_settings.date_format %}
+          {% include "partials/detail_row.html" with label="Notice period" value=application.notice_period %}
+        </dl>
+      </c-card>
+
+      {% if application.notes %}
+        <c-card title="Notes">
+          <p class="text-sm whitespace-pre-line text-ink-muted">{{ application.notes }}</p>
+        </c-card>
+      {% endif %}
+
+      {% if tasks %}
+        <c-card title="Tasks">
+          <ul class="space-y-2 text-sm">
+            {% for task in tasks %}
+              <li class="flex justify-between gap-3 {% if task.is_done %}text-ink-subtle line-through{% endif %}">
+                <span>{{ task.title }}</span>
+                {% if task.due_on %}<span class="shrink-0 text-ink-muted">{{ task.due_on|date:user_settings.date_format }}</span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        </c-card>
+      {% endif %}
+    </div>
+  </div>
+
+  {# --- Dialogs (opened by the buttons above) -------------------------------------- #}
+  <c-modal id="close-dialog" title="Close this application" action="{% url 'applications:close' application.pk %}">
+    {% csrf_token %}
+    <div class="space-y-4 text-ink">
+      {% include "partials/form_field.html" with field=close_form.stage %}
+      {% include "partials/form_field.html" with field=close_form.reason %}
+      {% include "partials/form_field.html" with field=close_form.details %}
+      {% include "partials/form_field.html" with field=close_form.occurred_at %}
+    </div>
+    <c-slot name="footer">
+      <c-button type="submit" variant="secondary" formmethod="dialog" formnovalidate>Cancel</c-button>
+      <c-button type="submit">Close application</c-button>
+    </c-slot>
+  </c-modal>
+
+  <c-modal id="delete-dialog" title="Delete this application?" action="{% url 'applications:delete' application.pk %}">
+    {% csrf_token %}
+    The application, its timeline and its tasks will be deleted. The job posting is kept
+    (marked as saved). This cannot be undone.
+    <c-slot name="footer">
+      <c-button type="submit" variant="secondary" formmethod="dialog" formnovalidate>Cancel</c-button>
+      <c-button type="submit" variant="danger">Delete</c-button>
+    </c-slot>
+  </c-modal>
+{% endblock content %}

@@ -29,6 +29,7 @@ The app layout: sidebar + top bar + main content. Pages extend this and fill
         <h1 class="text-base font-semibold tracking-tight">{% block page_title %}{% endblock page_title %}</h1>
 
         <div class="ml-auto flex items-center gap-1">
+          {% include "partials/clock.html" %}
           {% include "partials/theme_toggle.html" %}
         </div>
       </header>

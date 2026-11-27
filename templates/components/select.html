@@ -3,16 +3,17 @@ Labelled dropdown, the <select> sibling of <c-field> (same label, help and error
 Usage: <c-select label="Currency" name="currency" :options="choices" value="EUR" />
   options: list of (value, label) pairs, e.g. a Django form field's .field.choices
   value:   the selected value
+  hide_label: keep the label for screen readers only (compact filter bars)
 Other attributes go onto the <select> via {{ attrs }}.
 {% endcomment %}
-<c-vars label name options value="" help="" error="" required=False />
+<c-vars label name options value="" help="" error="" required=False hide_label=False />
 {% with field_id="id_"|add:name %}
   <div>
-    <label for="{{ field_id }}" class="block text-sm font-medium">
+    <label for="{{ field_id }}" class="{% if hide_label %}sr-only{% else %}block text-sm font-medium{% endif %}">
       {{ label }}{% if required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}
     </label>
     {# appearance-none hides the browser's own arrow, so it looks the same everywhere; ours is the icon. #}
-    <div class="relative mt-1.5">
+    <div class="relative {% if not hide_label %}mt-1.5{% endif %}">
       <select id="{{ field_id }}" name="{{ name }}"
               {% if required %}required{% endif %}
               {% if error %}aria-invalid="true"{% endif %}

@@ -1,0 +1,35 @@
+{% comment %}
+A sortable column header for the application list.
+  label: text, e.g. "Applied"
+  key:   sort key from selectors.SORT_FIELDS, e.g. "applied"
+  first: "desc" if the first click should sort descending (newest first, for dates)
+Clicking toggles ascending ↔ descending. {% querystring %} (Django 5.1+) copies the current
+URL's query string and changes only what we name: sort, and page=None removes the page
+number (a new order starts at page 1).
+aria-sort tells screen readers which column is sorted, and in which direction.
+{% endcomment %}
+{% with descending="-"|add:key %}
+  {% if filters.sort == key %}
+    {% querystring sort=descending page=None as href %}
+  {% elif filters.sort == descending %}
+    {% querystring sort=key page=None as href %}
+  {% elif first == "desc" %}
+    {% querystring sort=descending page=None as href %}
+  {% else %}
+    {% querystring sort=key page=None as href %}
+  {% endif %}
+  <th scope="col"
+      {% if filters.sort == key %}aria-sort="ascending"{% elif filters.sort == descending %}aria-sort="descending"{% endif %}>
+    <a href="{{ href }}" hx-get="{{ href }}" hx-target="#application-results" hx-push-url="true"
+       class="group inline-flex items-center gap-1 hover:text-ink {% if filters.sort == key or filters.sort == descending %}text-ink{% endif %}">
+      {{ label }}
+      {% if filters.sort == key %}
+        <c-icon name="arrow-up" class="size-3.5" />
+      {% elif filters.sort == descending %}
+        <c-icon name="arrow-down" class="size-3.5" />
+      {% else %}
+        <c-icon name="chevrons-up-down" class="size-3.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100" />
+      {% endif %}
+    </a>
+  </th>
+{% endwith %}

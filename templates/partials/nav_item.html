@@ -3,11 +3,13 @@ One sidebar navigation item.
   label:    text to show
   icon:     name of a file in templates/icons/ (without .html)
   url_name: optional, e.g. "core:home". Without it the page doesn't exist yet and the item shows "Soon".
+  section:  optional URL namespace, e.g. "applications": the item is also highlighted on every
+            other page of that section (detail, edit, ...), not only on url_name itself.
 The current page is highlighted (and marked aria-current="page" for screen readers).
 {% endcomment %}
 {% if url_name %}
   {% url url_name as href %}
-  {% if request.resolver_match.view_name == url_name %}
+  {% if request.resolver_match.view_name == url_name or section and request.resolver_match.namespace == section %}
     <a href="{{ href }}" aria-current="page"
        class="flex items-center gap-2.5 rounded-md bg-accent-soft px-2.5 py-1.5 text-sm font-medium text-accent">
       <c-icon :name="icon" />
