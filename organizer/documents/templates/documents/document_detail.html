@@ -2,7 +2,7 @@
 {% comment %}
 One document. Context:
   document:    the Document
-  versions:    its versions, newest first, each with sent_count
+  versions:    its versions, newest first, each with sent_count and sent_with ("used in")
   latest:      the newest version (or None)
   upload_form: VersionUploadForm (upload a new version)
   is_sent:     True if any version was sent (then the document can't be deleted)
@@ -58,6 +58,23 @@ Every action is a normal POST form that redirects back here (Post/Redirect/Get).
                     {{ version.size_bytes|filesizeformat }} · uploaded {{ version.created_at|date:user_settings.date_format }}{% if version.page_count %} · {{ version.page_count }} page{{ version.page_count|pluralize }}{% endif %}
                   </p>
                   {% if version.change_notes %}<p class="mt-1.5 text-sm whitespace-pre-line text-ink-muted">{{ version.change_notes }}</p>{% endif %}
+                  {# "Used in": sent_with.all is already loaded (prefetched in selectors.versions_of). #}
+                  {% if version.sent_count %}
+                    <div class="mt-2">
+                      <p class="text-xs font-medium text-ink-muted">Used in</p>
+                      <ul class="mt-1 space-y-1">
+                        {% for sent in version.sent_with.all %}
+                          {% with application=sent.application %}
+                            <li class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
+                              <a href="{{ application.get_absolute_url }}" class="hover:text-accent hover:underline">{{ application.posting.title }}</a>
+                              <span class="text-xs text-ink-subtle">{{ application.posting.company_display|default:"Unknown company" }} · sent {{ sent.sent_at|date:user_settings.date_format }}</span>
+                              <c-badge tone="{{ application.stage.color }}" dot>{{ application.stage.name }}</c-badge>
+                            </li>
+                          {% endwith %}
+                        {% endfor %}
+                      </ul>
+                    </div>
+                  {% endif %}
                 </div>
                 <div class="flex shrink-0 gap-1">
                   {% if version.can_preview %}

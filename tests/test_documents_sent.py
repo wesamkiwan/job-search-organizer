@@ -4,12 +4,15 @@ from datetime import datetime, timedelta
 
 import pytest
 from django import forms
+from django.db import connection
 from django.test import Client
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from pytest_django.asserts import assertContains, assertNotContains
 
 from organizer.applications.models import EventKind
+from organizer.core.models import UserSettings
 from organizer.documents import services
 from organizer.documents.forms import SendDocumentForm
 from organizer.documents.models import ApplicationDocument
@@ -220,3 +223,47 @@ def test_admin_delete_removes_the_timeline_entry(admin_client: Client) -> None:
     )
     assert not ApplicationDocument.objects.exists()
     assert not application.events.exists()
+
+
+# --- "used in" on the document page (step 2.6) -------------------------------------------
+
+
+def test_document_page_shows_where_each_version_was_used(admin_client: Client) -> None:
+    document = DocumentFactory.create()
+    used = DocumentVersionFactory.create(document=document)
+    DocumentVersionFactory.create(document=document)  # v2, never sent
+    sent = ApplicationDocumentFactory.create(
+        document_version=used,
+        application__posting__title="Python Developer",
+        application__posting__company__name="Nordlicht Software GmbH",
+    )
+    response = admin_client.get(document.get_absolute_url())
+    assertContains(response, "Used in", count=1)  # only under v1
+    assertContains(response, "Python Developer")
+    assertContains(response, "Nordlicht Software GmbH · sent")
+    assertContains(response, sent.application.get_absolute_url())
+    assertContains(response, sent.application.stage.name)
+
+
+def test_used_in_needs_the_same_queries_for_any_number_of_versions(
+    admin_client: Client,
+) -> None:
+    """Thanks to the prefetch, more versions and more sent records don't mean more
+    queries (no "N+1 problem": one query per version would grow with N)."""
+
+    def count_queries(document_pk: int) -> int:
+        url = reverse("documents:detail", args=[document_pk])
+        with CaptureQueriesContext(connection) as queries:
+            admin_client.get(url)
+        return len(queries)
+
+    # The very first request also creates the settings row (UserSettings.load() =
+    # get_or_create), which would add queries to whichever page is measured first.
+    UserSettings.load()
+    small = DocumentFactory.create()
+    ApplicationDocumentFactory.create(document_version__document=small)
+    big = DocumentFactory.create()
+    for version in DocumentVersionFactory.create_batch(4, document=big):
+        ApplicationDocumentFactory.create_batch(2, document_version=version)
+
+    assert count_queries(big.pk) == count_queries(small.pk)
