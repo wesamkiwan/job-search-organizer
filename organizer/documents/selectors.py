@@ -1,8 +1,10 @@
 """Read queries for documents (the write operations are in services.py)."""
 
-from django.db.models import Count, Max, OuterRef, Q, QuerySet, Subquery
+from django.db.models import Count, Max, OuterRef, Prefetch, Q, QuerySet, Subquery
 
-from .models import Document, DocumentLanguage, DocumentType, DocumentVersion
+from organizer.applications.models import Application
+
+from .models import ApplicationDocument, Document, DocumentLanguage, DocumentType, DocumentVersion
 
 
 def document_list(
@@ -63,7 +65,38 @@ def document_list(
 
 def versions_of(document: Document) -> QuerySet[DocumentVersion]:
     """A document's versions, newest first, each with the number of applications it was
-    sent with (sent_count)."""
-    return document.versions.annotate(
-        sent_count=Count("sent_with__application", distinct=True)
-    ).order_by("-version_number")
+    sent with (sent_count) and those records ("used in"), newest first.
+
+    prefetch_related + Prefetch: ONE extra query loads the sent records of ALL versions
+    (with their applications, postings, companies and stages), instead of one query per
+    version. Prefetch() lets us choose that query's select_related and ordering.
+    """
+    sent_records = ApplicationDocument.objects.select_related(
+        "application__posting__company", "application__stage"
+    ).order_by("-sent_at", "-pk")
+    return (
+        document.versions.annotate(sent_count=Count("sent_with__application", distinct=True))
+        .prefetch_related(Prefetch("sent_with", queryset=sent_records))
+        .order_by("-version_number")
+    )
+
+
+def sent_documents_for(application: Application) -> QuerySet[ApplicationDocument]:
+    """The document versions sent with an application, newest first."""
+    return (
+        ApplicationDocument.objects.filter(application=application)
+        .select_related("document_version__document__document_type")
+        .order_by("-sent_at", "-pk")
+    )
+
+
+def sendable_versions(application: Application) -> QuerySet[DocumentVersion]:
+    """Versions that can still be recorded as sent with this application: those of
+    documents that are not archived, minus the ones already sent with it.
+    Grouped by document, newest version first."""
+    return (
+        DocumentVersion.objects.filter(document__is_archived=False)
+        .exclude(sent_with__application=application)
+        .select_related("document")
+        .order_by("document__title", "document_id", "-version_number")
+    )

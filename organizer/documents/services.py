@@ -10,7 +10,8 @@ Why a service layer (like applications/services.py)? Uploading a version is more
   - remember the original name, size and type, and read its text and page count
 
 Deleting must also remove the file from the disk, and must refuse versions that were
-sent with an application. Sending a version records it on the application's timeline.
+sent with an application. Sending a version records it on the application's timeline
+(and un-sending removes it again).
 """
 
 import hashlib
@@ -223,13 +224,23 @@ def attach_version(
     ).exists():
         raise DocumentError(f"“{version}” was already sent with this application.")
 
-    sent = ApplicationDocument.objects.create(
-        application=application, document_version=version, sent_at=when
-    )
-    ApplicationEvent.objects.create(
+    event = ApplicationEvent.objects.create(
         application=application,
         kind=EventKind.DOCUMENT_SENT,
         occurred_at=when,
         summary=f"Sent “{version}”"[:200],
     )
-    return sent
+    return ApplicationDocument.objects.create(
+        application=application, document_version=version, sent_at=when, event=event
+    )
+
+
+@transaction.atomic
+def detach_version(sent: ApplicationDocument) -> None:
+    """Undo attach_version (e.g. it was recorded by mistake): remove the record and its
+    timeline entry. Afterwards the version can be deleted again, if it was sent nowhere else.
+    """
+    event = sent.event
+    sent.delete()
+    if event is not None:
+        event.delete()

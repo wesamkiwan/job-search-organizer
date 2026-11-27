@@ -5,9 +5,13 @@ from typing import Any, ClassVar
 from django import forms
 from django.core.files.uploadedfile import UploadedFile
 
+from organizer.applications.models import Application
+from organizer.core.forms import DateTimeInput, now_for_input
+
 from . import services
 from .file_types import ALLOWED_TYPES
-from .models import Document, DocumentLanguage, DocumentType
+from .models import Document, DocumentLanguage, DocumentType, DocumentVersion
+from .selectors import sendable_versions
 
 
 class DocumentForm(forms.ModelForm):
@@ -76,3 +80,26 @@ class DocumentFilterForm(forms.Form):
     @property
     def is_filtered(self) -> bool:
         return any(self.values().values())
+
+
+class VersionChoiceField(forms.ModelChoiceField):
+    """A dropdown of document versions, labelled "CV - Backend (EN) · v2 · cv.pdf"."""
+
+    # label_from_instance: how ModelChoiceField turns each object into the option's text.
+    def label_from_instance(self, obj: DocumentVersion) -> str:
+        return f"{obj.document.title} · v{obj.version_number} · {obj.original_filename}"
+
+
+class SendDocumentForm(forms.Form):
+    """Record that a document version was sent with an application."""
+
+    version = VersionChoiceField(
+        queryset=DocumentVersion.objects.none(),  # set per application in __init__
+        label="Document",
+        empty_label="Choose a document version",
+    )
+    sent_at = forms.DateTimeField(label="Sent on", widget=DateTimeInput(), initial=now_for_input)
+
+    def __init__(self, *args: Any, application: Application, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.fields["version"].queryset = sendable_versions(application)  # type: ignore[attr-defined]

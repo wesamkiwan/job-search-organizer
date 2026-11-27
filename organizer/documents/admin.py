@@ -215,3 +215,13 @@ class ApplicationDocumentAdmin(admin.ModelAdmin):
             return  # nothing is editable
         saved = services.attach_version(obj.application, obj.document_version, sent_at=obj.sent_at)
         obj.pk = saved.pk
+
+    # Through the service, so the "Document sent" timeline entry goes too.
+    def delete_model(self, request: HttpRequest, obj: ApplicationDocument) -> None:
+        services.detach_version(obj)
+
+    def delete_queryset(
+        self, request: HttpRequest, queryset: QuerySet[ApplicationDocument]
+    ) -> None:
+        for sent in queryset:
+            services.detach_version(sent)

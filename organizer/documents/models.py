@@ -21,7 +21,7 @@ from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 
-from organizer.applications.models import Application
+from organizer.applications.models import Application, ApplicationEvent
 from organizer.core.models import TimeStampedModel
 from organizer.jobs.models import Tag
 
@@ -178,6 +178,17 @@ class ApplicationDocument(TimeStampedModel):
         DocumentVersion, on_delete=models.PROTECT, related_name="sent_with"
     )
     sent_at = models.DateTimeField(default=timezone.now)
+    # The "Document sent" entry on the application's timeline, written together with this
+    # record (services.attach_version). Removing the record removes that entry too.
+    # OneToOne: one record ↔ one event. SET_NULL: if the event is deleted, this stays.
+    event = models.OneToOneField(
+        ApplicationEvent,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        editable=False,
+        related_name="sent_document",
+    )
 
     class Meta:
         ordering = ("-sent_at", "-pk")

@@ -7,6 +7,8 @@ One application. Context:
   stage_form: StageChangeForm (move to another stage)
   close_form: CloseForm (in the "Close application" dialog)
   event_form: EventForm (add a note, call, email, ... to the timeline)
+  sent_documents:     document versions sent with it (documents app)
+  send_document_form: SendDocumentForm (record a version as sent; posts to the documents app)
 Every action is a normal POST form that redirects back here (Post/Redirect/Get).
 {% endcomment %}
 
@@ -91,7 +93,7 @@ Every action is a normal POST form that redirects back here (Post/Redirect/Get).
       {% endif %}
     </div>
 
-    {# --- Side column: stage, details, tasks ------------------------------------- #}
+    {# --- Side column: stage, documents sent, details, tasks ---------------------- #}
     <div class="space-y-6">
       <c-card title="Stage">
         {% if application.is_closed %}
@@ -114,6 +116,49 @@ Every action is a normal POST form that redirects back here (Post/Redirect/Get).
         {% if not application.is_closed %}
           <c-button variant="secondary" class="mt-2 w-full"
                     @click="document.getElementById('close-dialog').showModal()">Close application…</c-button>
+        {% endif %}
+      </c-card>
+
+      <c-card title="Documents sent" description="The exact versions you sent with this application.">
+        {% if sent_documents %}
+          <ul class="mb-4 divide-y divide-line">
+            {% for sent in sent_documents %}
+              {% with version=sent.document_version %}
+                <li class="flex items-start justify-between gap-2 py-2.5 first:pt-0">
+                  <div class="min-w-0">
+                    <a href="{{ version.document.get_absolute_url }}" class="text-sm font-medium hover:text-accent hover:underline">{{ version.document.title }}</a>
+                    <p class="text-xs text-ink-subtle">
+                      {{ version.document.document_type.name }} · v{{ version.version_number }} · sent {{ sent.sent_at|date:user_settings.date_format }}
+                    </p>
+                  </div>
+                  <div class="flex shrink-0">
+                    <c-button size="sm" variant="ghost" href="{% url 'documents:download' version.pk %}" title="Download">
+                      <c-icon name="download" /><span class="sr-only">Download {{ version }}</span>
+                    </c-button>
+                    <c-button size="sm" variant="ghost" title="Remove (recorded by mistake)" @click="document.getElementById('remove-sent-{{ sent.pk }}').showModal()">
+                      <c-icon name="x" /><span class="sr-only">Remove {{ version }}</span>
+                    </c-button>
+                  </div>
+                </li>
+              {% endwith %}
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="mb-4 text-sm text-ink-muted">None recorded yet.</p>
+        {% endif %}
+
+        {% if send_document_form.fields.version.queryset %}
+          <form method="post" action="{% url 'documents:send' application.pk %}" class="space-y-4 border-t border-line pt-4" novalidate>
+            {% csrf_token %}
+            {% include "partials/form_field.html" with field=send_document_form.version %}
+            {% include "partials/form_field.html" with field=send_document_form.sent_at %}
+            <c-button type="submit" variant="secondary" class="w-full">Record as sent</c-button>
+          </form>
+        {% else %}
+          <p class="border-t border-line pt-4 text-sm text-ink-muted">
+            {% if sent_documents %}All your document versions are recorded here.{% else %}No documents yet.{% endif %}
+            <a href="{% url 'documents:create' %}" class="text-accent hover:underline">Add a document</a>.
+          </p>
         {% endif %}
       </c-card>
 
@@ -171,6 +216,18 @@ Every action is a normal POST form that redirects back here (Post/Redirect/Get).
       <c-button type="submit">Close application</c-button>
     </c-slot>
   </c-modal>
+
+  {% for sent in sent_documents %}
+    <c-modal id="remove-sent-{{ sent.pk }}" title="Remove this document?" action="{% url 'documents:remove_sent' sent.pk %}">
+      {% csrf_token %}
+      “{{ sent.document_version }}” will no longer be recorded as sent with this application,
+      and its timeline entry goes too. The document itself stays.
+      <c-slot name="footer">
+        <c-button type="submit" variant="secondary" formmethod="dialog" formnovalidate>Cancel</c-button>
+        <c-button type="submit" variant="danger">Remove</c-button>
+      </c-slot>
+    </c-modal>
+  {% endfor %}
 
   <c-modal id="delete-dialog" title="Delete this application?" action="{% url 'applications:delete' application.pk %}">
     {% csrf_token %}
