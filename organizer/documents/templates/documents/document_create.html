@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% comment %}
+Add a document together with its first file (version 1). Context:
+  document_form: DocumentForm (prefix "document")
+  upload_form:   VersionUploadForm (prefix "version")
+enctype="multipart/form-data" is required to send files; without it the browser sends
+only the file's NAME, and request.FILES stays empty.
+{% endcomment %}
+
+{% block title %}Add document · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Add document{% endblock page_title %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data" class="max-w-3xl space-y-6" novalidate>
+    {% csrf_token %}
+
+    <c-card title="Document" description="The document as a whole, e.g. “CV - Backend Developer (EN)”.">
+      <div class="grid gap-5 sm:grid-cols-2">
+        {% for field in document_form %}
+          {% if field.name != "is_archived" %}
+            <div {% if field.name in document_form.wide_fields %}class="sm:col-span-2"{% endif %}>
+              {% include "partials/form_field.html" %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </c-card>
+
+    <c-card title="First file" description="Becomes version 1. Upload newer files later on the document's page.">
+      <div class="grid gap-5">
+        {% for field in upload_form %}
+          {% include "partials/form_field.html" %}
+        {% endfor %}
+      </div>
+    </c-card>
+
+    <div class="flex justify-end gap-2">
+      <c-button variant="secondary" href="{% url 'documents:list' %}">Cancel</c-button>
+      <c-button type="submit">Add document</c-button>
+    </div>
+  </form>
+{% endblock content %}

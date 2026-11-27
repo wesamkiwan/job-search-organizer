@@ -13,7 +13,7 @@
     <li>{% include "partials/nav_item.html" with label="Applications" icon="briefcase-business" url_name="applications:list" section="applications" %}</li>
     <li>{% include "partials/nav_item.html" with label="Companies" icon="building-2" url_name="companies:list" section="companies" %}</li>
     <li>{% include "partials/nav_item.html" with label="Contacts" icon="users" url_name="contacts:list" section="contacts" %}</li>
-    <li>{% include "partials/nav_item.html" with label="Documents" icon="file-text" %}</li>
+    <li>{% include "partials/nav_item.html" with label="Documents" icon="file-text" url_name="documents:list" section="documents" %}</li>
   </ul>
 
   {# mt-auto pushes this list to the bottom of the sidebar #}

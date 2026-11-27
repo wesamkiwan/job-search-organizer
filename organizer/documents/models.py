@@ -18,6 +18,7 @@ from uuid import uuid4
 
 from django.db import models
 from django.db.models.functions import Lower
+from django.urls import reverse
 from django.utils import timezone
 
 from organizer.applications.models import Application
@@ -80,6 +81,9 @@ class Document(TimeStampedModel):
     def __str__(self) -> str:
         return self.title
 
+    def get_absolute_url(self) -> str:
+        return reverse("documents:detail", args=[self.pk])
+
     @property
     def latest_version(self) -> "DocumentVersion | None":
         # One query. Pages that list many documents will use a prefetch instead (batch B).
@@ -87,6 +91,10 @@ class Document(TimeStampedModel):
 
 
 # --- DocumentVersion ---------------------------------------------------------------------
+
+
+# Formats every browser can display itself. A Word file is always downloaded.
+PREVIEW_MIME_TYPES = frozenset({"application/pdf", "image/png", "image/jpeg"})
 
 
 def version_upload_to(instance: "DocumentVersion", filename: str) -> str:
@@ -120,8 +128,11 @@ class DocumentVersion(TimeStampedModel):
     size_bytes = models.PositiveBigIntegerField("size (bytes)", editable=False)
     mime_type = models.CharField("MIME type", max_length=100, editable=False)
     original_filename = models.CharField(max_length=255, editable=False)
-    # Plain text taken out of PDF / DOCX files (batch B): for search and future AI features.
+    # Plain text taken out of PDF / DOCX files: for search and future AI features.
     extracted_text = models.TextField(blank=True, editable=False)
+    # null=True: "unknown" is stored as NULL (empty), which is not the same as 0 pages.
+    # Exact for PDFs; for Word files the number Word saved in the file (see extraction.py).
+    page_count = models.PositiveIntegerField("pages", null=True, blank=True, editable=False)
     change_notes = models.TextField(blank=True, help_text="What changed in this version?")
 
     class Meta:
@@ -135,6 +146,11 @@ class DocumentVersion(TimeStampedModel):
     def __str__(self) -> str:
         # Uses the document: lists of versions should select_related("document").
         return f"{self.document.title} v{self.version_number}"
+
+    @property
+    def can_preview(self) -> bool:
+        """Can the browser show this file itself (in a new tab), instead of downloading it?"""
+        return self.mime_type in PREVIEW_MIME_TYPES
 
     @property
     def is_sent(self) -> bool:

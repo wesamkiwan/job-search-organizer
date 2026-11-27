@@ -9,5 +9,6 @@ urlpatterns = [
     path("applications/", include("organizer.applications.urls")),
     path("companies/", include("organizer.companies.urls")),
     path("contacts/", include("organizer.companies.contact_urls")),
+    path("documents/", include("organizer.documents.urls")),
     path("", include("organizer.core.urls")),
 ]

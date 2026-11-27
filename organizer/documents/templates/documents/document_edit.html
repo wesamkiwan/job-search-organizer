@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% comment %}Edit a document's details (not its files). Context: form (DocumentForm), document.{% endcomment %}
+
+{% block title %}Edit {{ document.title }} · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Edit document{% endblock page_title %}
+
+{% block content %}
+  {% include "partials/simple_form_page.html" with card_title="Document" submit_label="Save changes" cancel_url=document.get_absolute_url %}
+{% endblock content %}
