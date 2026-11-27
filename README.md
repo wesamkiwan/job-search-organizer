@@ -141,6 +141,8 @@ docs/            Specification and architecture decision records
 6. [Roadmap](docs/06-roadmap.md): phases
 7. [Architecture decision records](docs/adr/): why key decisions were made
 
+What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+
 ## Privacy
 
 All personal data (database, uploaded documents, `.env`) stays on your machine and is
