@@ -27,6 +27,8 @@ The bare HTML page that every page shares: <head> (theme, CSS, scripts) and <bod
     <script src="{% static 'js/clock.js' %}" defer></script>
     <script src="{% static 'vendor/htmx/htmx.min.js' %}" defer></script>
     <script src="{% static 'vendor/alpinejs/alpine.min.js' %}" defer></script>
+    {# Page-specific scripts (e.g. the kanban board's). #}
+    {% block scripts %}{% endblock scripts %}
   </head>
   {# hx-headers: every HTMX request sends the CSRF token, so Django accepts POSTs. #}
   <body class="min-h-screen antialiased" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>

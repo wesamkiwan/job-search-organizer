@@ -6,7 +6,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import QuerySet
 from django.forms import BaseForm
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.cache import patch_vary_headers
 from django.views.decorators.http import require_POST
@@ -21,8 +21,8 @@ from .forms import (
     StageChangeForm,
     company_names,
 )
-from .models import Application
-from .selectors import application_list
+from .models import Application, PipelineStage
+from .selectors import BOARD_CLOSED_DAYS, application_list, board_columns
 from .services import ApplicationError
 
 PAGE_SIZE = 25
@@ -61,6 +61,34 @@ def application_list_view(request: HttpRequest) -> HttpResponse:
     # a bare fragment).
     patch_vary_headers(response, ("HX-Request",))
     return response
+
+
+# --- Kanban board ------------------------------------------------------------------------
+
+
+def application_board(request: HttpRequest) -> HttpResponse:
+    """The kanban board: one column per stage. Dragging a card calls application_move."""
+    context = {"columns": board_columns(), "closed_days": BOARD_CLOSED_DAYS}
+    return render(request, "applications/application_board.html", context)
+
+
+@require_POST
+def application_move(request: HttpRequest, pk: int) -> JsonResponse:
+    """Move a card to another column (called by static/js/board.js after a drop).
+
+    Answers with JSON instead of a page: the browser only needs to know "OK" (and the
+    message to show) or the error, so it can put the card back.
+    """
+    application = get_object_or_404(_applications(), pk=pk)
+    try:
+        stage = PipelineStage.objects.get(pk=request.POST.get("stage", ""))
+    except (PipelineStage.DoesNotExist, ValueError):  # missing, unknown or not a number
+        return JsonResponse({"error": "Unknown stage."}, status=400)
+    try:
+        services.change_stage(application, stage)
+    except ApplicationError as error:
+        return JsonResponse({"error": str(error)}, status=400)
+    return JsonResponse({"message": f"“{application.posting.title}” moved to “{stage}”."})
 
 
 # --- Add / edit ----------------------------------------------------------------------------
