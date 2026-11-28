@@ -72,6 +72,8 @@ class Metric:
     comparable: bool = True
     # For the trend arrow's colour: is going up good (green) or bad (red)?
     higher_is_better: bool = True
+    # The GROUPS key of the applications behind the number ("" = none): the drill-down.
+    group: str = ""
 
 
 REGISTRY: dict[str, Metric] = {}
@@ -85,6 +87,7 @@ def metric(
     *,
     comparable: bool = True,
     higher_is_better: bool = True,
+    group: str = "",
 ) -> Callable[[Callable[[FilterContext], MetricResult]], Callable[[FilterContext], MetricResult]]:
     """Decorator that registers a metric function under `key`.
 
@@ -97,7 +100,9 @@ def metric(
     ) -> Callable[[FilterContext], MetricResult]:
         if key in REGISTRY:
             raise ValueError(f"A metric called {key!r} is already registered.")
-        REGISTRY[key] = Metric(key, label, unit, description, compute, comparable, higher_is_better)
+        REGISTRY[key] = Metric(
+            key, label, unit, description, compute, comparable, higher_is_better, group
+        )
         return compute
 
     return register
@@ -196,12 +201,110 @@ def _stage_events(stages: Q) -> Q:
     )
 
 
+# --- groups: WHICH applications are behind a number (for counting and drill-down) --------
+
+
+@dataclass(frozen=True)
+class Group:
+    """A named set of applications, e.g. "responded". Metrics count groups, and the
+    drill-down page lists them, so the number and the list can never disagree."""
+
+    key: str
+    label: str
+    members: Callable[[FilterContext], QuerySet[Application]]
+
+
+GroupFunction = Callable[[FilterContext], QuerySet[Application]]
+GROUPS: dict[str, Group] = {}
+
+
+def group(key: str, label: str) -> Callable[[GroupFunction], GroupFunction]:
+    """Decorator that registers a group function under `key` (like @metric)."""
+
+    def register(members: GroupFunction) -> GroupFunction:
+        if key in GROUPS:
+            raise ValueError(f"A group called {key!r} is already registered.")
+        GROUPS[key] = Group(key, label, members)
+        return members
+
+    return register
+
+
+@group("sent", "Applications sent")
+def sent(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent()
+
+
+@group("responded", "Got a response")
+def responded(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent().filter(_responded())
+
+
+@group("interviewed", "Got an interview")
+def interviewed(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent().filter(_reached(INTERVIEW_STAGES))
+
+
+@group("offered", "Got an offer")
+def offered(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent().filter(_reached(OFFER_STAGES))
+
+
+@group("accepted", "Accepted")
+def accepted(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent().filter(stage__category=StageCategory.WON)
+
+
+@group("rejected", "Rejected")
+def rejected(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent().filter(stage__category=StageCategory.LOST, stage__counts_as_ghosted=False)
+
+
+@group("ghosted", "Ghosted")
+def ghosted(ctx: FilterContext) -> QuerySet[Application]:
+    """Marked as ghosted, or still open without any answer after the number of days set
+    in Settings ("ghosted after")."""
+    cutoff = ctx.today - timedelta(days=UserSettings.load().ghosted_after_days)
+    silent_too_long = Q(closed_at__isnull=True, applied_on__lte=cutoff) & ~_responded()
+    return ctx.sent().filter(Q(stage__counts_as_ghosted=True) | silent_too_long)
+
+
+@group("withdrawn", "Withdrawn")
+def withdrawn(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent().filter(stage__category=StageCategory.WITHDRAWN)
+
+
+@group("still_open", "Still open")
+def still_open(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.sent().filter(closed_at__isnull=True)
+
+
+@group("waiting", "Waiting for an answer")
+def waiting(ctx: FilterContext) -> QuerySet[Application]:
+    """Still open and not (yet) counted as ghosted. Together with rejected, accepted,
+    ghosted and withdrawn this splits "sent" into five parts that add up exactly."""
+    return still_open(ctx).exclude(pk__in=ghosted(ctx).values("pk"))
+
+
+@group("active", "Active pipeline")
+def active(ctx: FilterContext) -> QuerySet[Application]:
+    """Open right now (whenever sent): applied, in progress or with an offer."""
+    return ctx.applications().filter(closed_at__isnull=True, stage__category__in=OPEN_CATEGORIES)
+
+
+@group("follow_up", "Follow-up due")
+def follow_up(ctx: FilterContext) -> QuerySet[Application]:
+    return ctx.applications().filter(closed_at__isnull=True, follow_up_on__lte=ctx.today)
+
+
 # --- the metrics -------------------------------------------------------------------------
 
 
-@metric("applications_sent", "Applications sent", Unit.COUNT, "Applied in the period.")
+@metric(
+    "applications_sent", "Applications sent", Unit.COUNT, "Applied in the period.", group="sent"
+)
 def applications_sent(ctx: FilterContext) -> MetricResult:
-    return MetricResult(ctx.sent().count(), Unit.COUNT)
+    return MetricResult(sent(ctx).count(), Unit.COUNT)
 
 
 @metric(
@@ -209,10 +312,10 @@ def applications_sent(ctx: FilterContext) -> MetricResult:
     "Response rate",
     Unit.PERCENT,
     "Sent in the period and answered by the employer (incl. rejections).",
+    group="responded",
 )
 def response_rate(ctx: FilterContext) -> MetricResult:
-    sent = ctx.sent()
-    return _rate(sent.filter(_responded()), sent)
+    return _rate(responded(ctx), sent(ctx))
 
 
 @metric(
@@ -220,16 +323,21 @@ def response_rate(ctx: FilterContext) -> MetricResult:
     "Interview rate",
     Unit.PERCENT,
     "Sent in the period and invited to an interview (or got an offer).",
+    group="interviewed",
 )
 def interview_rate(ctx: FilterContext) -> MetricResult:
-    sent = ctx.sent()
-    return _rate(sent.filter(_reached(INTERVIEW_STAGES)), sent)
+    return _rate(interviewed(ctx), sent(ctx))
 
 
-@metric("offer_rate", "Offer rate", Unit.PERCENT, "Sent in the period and got an offer.")
+@metric(
+    "offer_rate",
+    "Offer rate",
+    Unit.PERCENT,
+    "Sent in the period and got an offer.",
+    group="offered",
+)
 def offer_rate(ctx: FilterContext) -> MetricResult:
-    sent = ctx.sent()
-    return _rate(sent.filter(_reached(OFFER_STAGES)), sent)
+    return _rate(offered(ctx), sent(ctx))
 
 
 @metric(
@@ -238,11 +346,10 @@ def offer_rate(ctx: FilterContext) -> MetricResult:
     Unit.PERCENT,
     "Sent in the period and now rejected (lost, not ghosted).",
     higher_is_better=False,
+    group="rejected",
 )
 def rejection_rate(ctx: FilterContext) -> MetricResult:
-    sent = ctx.sent()
-    rejected = sent.filter(stage__category=StageCategory.LOST, stage__counts_as_ghosted=False)
-    return _rate(rejected, sent)
+    return _rate(rejected(ctx), sent(ctx))
 
 
 @metric(
@@ -252,12 +359,10 @@ def rejection_rate(ctx: FilterContext) -> MetricResult:
     "Sent in the period and marked as ghosted, or still open without any answer after the "
     "number of days set in Settings.",
     higher_is_better=False,
+    group="ghosted",
 )
 def ghosting_rate(ctx: FilterContext) -> MetricResult:
-    sent = ctx.sent()
-    cutoff = ctx.today - timedelta(days=UserSettings.load().ghosted_after_days)
-    silent_too_long = Q(closed_at__isnull=True, applied_on__lte=cutoff) & ~_responded()
-    return _rate(sent.filter(Q(stage__counts_as_ghosted=True) | silent_too_long), sent)
+    return _rate(ghosted(ctx), sent(ctx))
 
 
 @metric(
@@ -266,6 +371,7 @@ def ghosting_rate(ctx: FilterContext) -> MetricResult:
     Unit.DAYS,
     "Average days from applying to the employer's first answer (sent in the period).",
     higher_is_better=False,
+    group="responded",
 )
 def days_to_first_response(ctx: FilterContext) -> MetricResult:
     response_events = _stage_events(RESPONSE_STAGES) | Q(events__kind=EventKind.EMAIL_RECEIVED)
@@ -278,6 +384,7 @@ def days_to_first_response(ctx: FilterContext) -> MetricResult:
     Unit.DAYS,
     "Average days from applying to an offer (sent in the period).",
     higher_is_better=False,
+    group="offered",
 )
 def days_to_offer(ctx: FilterContext) -> MetricResult:
     return _average_days_until(ctx.sent(), _stage_events(OFFER_STAGES))
@@ -289,10 +396,10 @@ def days_to_offer(ctx: FilterContext) -> MetricResult:
     Unit.COUNT,
     "Open applications right now: applied, in progress or with an offer.",
     comparable=False,
+    group="active",
 )
 def active_pipeline(ctx: FilterContext) -> MetricResult:
-    active = ctx.applications().filter(closed_at__isnull=True, stage__category__in=OPEN_CATEGORIES)
-    return MetricResult(active.count(), Unit.COUNT)
+    return MetricResult(active(ctx).count(), Unit.COUNT)
 
 
 @metric(
@@ -302,14 +409,13 @@ def active_pipeline(ctx: FilterContext) -> MetricResult:
     "Open applications whose follow-up date has come, plus open tasks that are due.",
     comparable=False,
     higher_is_better=False,
+    group="follow_up",
 )
 def follow_ups_due(ctx: FilterContext) -> MetricResult:
-    applications = ctx.applications()
-    due_applications = applications.filter(closed_at__isnull=True, follow_up_on__lte=ctx.today)
     due_tasks = Task.objects.filter(done_at__isnull=True, due_on__lte=ctx.today).filter(
-        Q(application__in=applications) | Q(application__isnull=True)
+        Q(application__in=ctx.applications()) | Q(application__isnull=True)
     )
-    return MetricResult(due_applications.count() + due_tasks.count(), Unit.COUNT)
+    return MetricResult(follow_up(ctx).count() + due_tasks.count(), Unit.COUNT)
 
 
 @metric(

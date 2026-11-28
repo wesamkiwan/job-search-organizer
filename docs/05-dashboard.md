@@ -80,7 +80,7 @@ The analytics are only as good as the tracking. The app supports this by:
 - `analytics/metrics.py`: registry of metric functions `(FilterContext) -> MetricResult`,
   built on selectors; unit tested with factory data.
 - `analytics/widgets.py`: registry of widgets (metric + chart type + default size + options).
-- Chart data is JSON rendered by ECharts, themed from the design tokens (light/dark).
+- Charts are server-rendered HTML styled with chart design tokens (light/dark), see ADR 0007.
 - Aggregations happen in the database (Django ORM aggregation); results are cached per
   filter context and invalidated on relevant writes.
 - Export: any widget's data as CSV; chart as PNG.

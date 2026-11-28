@@ -124,6 +124,25 @@
 
   /* Shadow only for things floating above the page (menus, modals) */
   --popover-shadow: 0 4px 16px rgb(28 27 25 / 0.08), 0 1px 3px rgb(28 27 25 / 0.06);
+
+  /* Charts (dashboard). Categorical slots 1-5 in a FIXED order: a series keeps its slot,
+   * and this order passed the colour validator (colour-blind separation, lightness and
+   * contrast) against --surface in both themes. Slots 2-5 are below 3:1 contrast on
+   * white, so charts always print their values as text too (never colour alone).
+   * Single-series charts use slot 1. */
+  --chart-1: #257de0;
+  --chart-2: #f47230;
+  --chart-3: #00b894;
+  --chart-4: #f2a600;
+  --chart-5: #ee7fac;
+  --chart-on-fill: #ffffff; /* text inside a coloured block */
+  --chart-on-4: #0b0b0b; /* ...except on yellow */
+  /* One-hue sequential ramp (heatmap; meter track = step 1): light = near zero. */
+  --chart-heat-1: #cce3fd;
+  --chart-heat-2: #84b9f3;
+  --chart-heat-3: #338ced;
+  --chart-heat-4: #1b64be;
+  --chart-heat-5: #0e3d7e;
 }
 
 /* Dark theme: warm near-black, not pure black (easier on the eyes, keeps the paper feel). */
@@ -158,6 +177,21 @@
   --overlay: rgb(0 0 0 / 0.6);
 
   --popover-shadow: 0 4px 16px rgb(0 0 0 / 0.4), 0 1px 3px rgb(0 0 0 / 0.3);
+
+  /* Charts: the same five hues, stepped for the dark surface (validated against it). */
+  --chart-1: #338ced;
+  --chart-2: #e76624;
+  --chart-3: #00a888;
+  --chart-4: #d28e05;
+  --chart-5: #e24d8b;
+  --chart-on-fill: #ffffff;
+  --chart-on-4: #ffffff;
+  /* On dark, "near zero" is the dark end: more = lighter = more contrast. */
+  --chart-heat-1: #0f4a96;
+  --chart-heat-2: #1b64be;
+  --chart-heat-3: #338ced;
+  --chart-heat-4: #6aabf1;
+  --chart-heat-5: #b6d5f8;
 }
 
 /* ---------------------------------------------------------------------------
@@ -190,6 +224,18 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-overlay: var(--overlay);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-on-fill: var(--chart-on-fill);
+  --color-chart-on-4: var(--chart-on-4);
+  --color-chart-heat-1: var(--chart-heat-1);
+  --color-chart-heat-2: var(--chart-heat-2);
+  --color-chart-heat-3: var(--chart-heat-3);
+  --color-chart-heat-4: var(--chart-heat-4);
+  --color-chart-heat-5: var(--chart-heat-5);
 
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;

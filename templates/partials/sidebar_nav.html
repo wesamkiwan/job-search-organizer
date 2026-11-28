@@ -1,6 +1,6 @@
 {# Sidebar content: brand + navigation. Used by both the desktop sidebar and the mobile panel. #}
 <div class="flex h-14 shrink-0 items-center border-b border-line px-4">
-  <a href="{% url 'core:home' %}" class="flex items-center gap-2.5 font-semibold tracking-tight">
+  <a href="{% url 'analytics:dashboard' %}" class="flex items-center gap-2.5 font-semibold tracking-tight">
     <span aria-hidden="true"
           class="grid size-7 place-items-center rounded-md bg-accent font-mono text-xs font-medium text-on-accent">JS</span>
     Job Search Organizer
@@ -9,7 +9,7 @@
 
 <nav aria-label="Main" class="flex flex-1 flex-col overflow-y-auto px-3 py-4">
   <ul class="space-y-0.5">
-    <li>{% include "partials/nav_item.html" with label="Dashboard" icon="layout-dashboard" url_name="core:home" %}</li>
+    <li>{% include "partials/nav_item.html" with label="Dashboard" icon="layout-dashboard" url_name="analytics:dashboard" section="analytics" %}</li>
     <li>{% include "partials/nav_item.html" with label="Applications" icon="briefcase-business" url_name="applications:list" section="applications" %}</li>
     <li>{% include "partials/nav_item.html" with label="Companies" icon="building-2" url_name="companies:list" section="companies" %}</li>
     <li>{% include "partials/nav_item.html" with label="Contacts" icon="users" url_name="contacts:list" section="contacts" %}</li>

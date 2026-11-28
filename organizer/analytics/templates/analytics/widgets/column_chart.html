@@ -1,0 +1,37 @@
+{% comment %}
+Columns per calendar week (one series: slot 1), with the weekly goal as a solid line.
+Every column is a link (the whole slot is the hit target, not only the painted bar) to
+the applications of that week; hovering or focusing it shows a tooltip. Columns are at
+most 24px wide, 4px rounded at the top, standing on one baseline.
+item.columns: [widgets.Bar];  item.goal_target / goal_share;  item.show_values;  item.label_every
+{% endcomment %}
+{% if item.columns %}
+  <div class="relative flex h-48 items-end gap-0.5 border-b border-line-strong pt-5">
+    {% for column in item.columns %}
+      <a href="{{ column.url }}"
+         class="group relative flex h-full flex-1 items-end justify-center rounded-t-sm hover:bg-surface-muted focus-visible:outline-2"
+         aria-label="Week of {{ column.label }}: {{ column.text }} application{{ column.value|pluralize }}">
+        <span class="relative block w-full max-w-6 rounded-t-[4px] bg-chart-1 transition-opacity group-hover:opacity-80" style="height: {% widthratio column.share 1 100 %}%">
+          {% if item.show_values and column.value %}
+            <span class="absolute bottom-full left-1/2 mb-0.5 -translate-x-1/2 text-xs text-ink-muted tabular-nums">{{ column.text }}</span>
+          {% endif %}
+        </span>
+        <span role="tooltip" class="pointer-events-none absolute bottom-full z-10 mb-1 hidden rounded-md bg-ink px-2 py-1 text-xs whitespace-nowrap text-surface shadow-popover group-hover:block group-focus-visible:block">
+          <strong class="font-semibold">{{ column.text }}</strong> · week of {{ column.label }}
+        </span>
+      </a>
+    {% endfor %}
+    {% if item.goal_target %}
+      <div class="pointer-events-none absolute inset-x-0 border-t border-ink-muted" style="bottom: {% widthratio item.goal_share 1 100 %}%">
+        <span class="absolute right-0 bottom-0.5 rounded-sm bg-surface px-1 text-xs text-ink-muted">Goal {{ item.goal_target }}</span>
+      </div>
+    {% endif %}
+  </div>
+  <div class="mt-1 flex gap-0.5" aria-hidden="true">
+    {% for column in item.columns %}
+      <span class="flex-1 text-center text-[11px] whitespace-nowrap text-ink-subtle">{% if forloop.counter0|divisibleby:item.label_every %}{{ column.label }}{% endif %}</span>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-sm text-ink-muted">No weeks in this period.</p>
+{% endif %}

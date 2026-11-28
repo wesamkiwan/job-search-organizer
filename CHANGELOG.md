@@ -18,6 +18,12 @@ minor release while the project is in early development (0.x).
 - Goals such as "10 applications per week", with progress for the current week or month.
 - "Counts as interview" and "counts as ghosted" switches on pipeline stages (on for the
   default Interviewing and Ghosted stages).
+- The dashboard is the new start page: a filter bar (period presets or a custom range,
+  source, channel, tag, work mode, employment type) that updates live, KPI tiles with the
+  change against the previous period, a goal meter with a form to set the goal, the
+  funnel, applications per week with the goal line, the pipeline by stage and the
+  outcomes. Every number and bar links to the applications behind it, and every widget
+  can be shown as a table.
 
 ## [0.3.0] - 2026-11-27
 

@@ -1,0 +1,21 @@
+{% comment %}
+"Show as table" under every widget: the same data as text, so no value can only be read
+from a colour, a bar length or a hover tooltip (accessibility). table: widgets.Table.
+{% endcomment %}
+{% if table.rows %}
+  <details class="border-t border-line px-5 py-2.5 text-sm">
+    <summary class="cursor-pointer text-ink-muted hover:text-ink">Show as table</summary>
+    <div class="mt-2 overflow-x-auto">
+      <table class="w-full text-left tabular-nums">
+        <thead>
+          <tr>{% for header in table.headers %}<th scope="col" class="py-1 pr-4 text-xs font-medium text-ink-muted">{{ header }}</th>{% endfor %}</tr>
+        </thead>
+        <tbody>
+          {% for row in table.rows %}
+            <tr class="border-t border-line">{% for cell in row %}<td class="py-1.5 pr-4">{{ cell }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+{% endif %}

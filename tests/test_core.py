@@ -16,16 +16,16 @@ from organizer.core.models import UserSettings
 # admin_client fixture: a test client that is already logged in as a superuser.
 
 
-# The home page (dashboard) loads and is rendered with the right template.
-def test_home_page_loads(admin_client: Client) -> None:
-    response = admin_client.get(reverse("core:home"))
+# The start page is the dashboard (analytics app).
+def test_home_page_is_the_dashboard(admin_client: Client) -> None:
+    response = admin_client.get("/")
     assert response.status_code == 200
-    assertTemplateUsed(response, "core/home.html")
+    assertTemplateUsed(response, "analytics/dashboard.html")
 
 
 # The sidebar marks the current page for screen readers (and highlights it).
 def test_home_marks_dashboard_as_current_page(admin_client: Client) -> None:
-    response = admin_client.get(reverse("core:home"))
+    response = admin_client.get(reverse("analytics:dashboard"))
     assertContains(response, 'aria-current="page"')
 
 
@@ -45,10 +45,10 @@ def test_ui_gallery_loads_when_debug_on(admin_client: Client, settings: Settings
 # The sidebar only links to the UI kit in development, never in production.
 def test_ui_kit_link_only_in_debug(admin_client: Client, settings: Settings) -> None:
     url = reverse("core:ui")
-    response = admin_client.get(reverse("core:home"))
+    response = admin_client.get(reverse("analytics:dashboard"))
     assertNotContains(response, url)
     settings.DEBUG = True
-    response = admin_client.get(reverse("core:home"))
+    response = admin_client.get(reverse("analytics:dashboard"))
     assertContains(response, url)
 
 
@@ -180,7 +180,7 @@ def test_top_bar_shows_current_date_in_user_format(admin_client: Client) -> None
     user_settings.save()
     today = timezone.localdate()
 
-    response = admin_client.get(reverse("core:home"))
+    response = admin_client.get(reverse("analytics:dashboard"))
     assertContains(response, "data-clock")
     assertContains(response, 'data-date-format="Y-m-d"')
     assertContains(response, today.strftime("%Y-%m-%d"))

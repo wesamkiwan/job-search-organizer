@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% comment %}
+The dashboard (start page). Context:
+  form:          DashboardFilterForm (the filter bar)
+  period_text:   the period shown, e.g. "30 Oct 2026 – 28 Nov 2026"
+  previous_text: the period it is compared with ("" for all time)
+  items:         the widgets in layout order: {"widget": Widget, ...its data}
+  goal_form:     GoalForm;  query: the current filters as a query string
+The filter bar re-requests this page with HTMX when a filter changes; hx-select picks
+#dashboard-content out of the answer. While loading, the old content stays visible at
+half opacity (hx-indicator adds the htmx-request class): no flash, no layout jump.
+{% endcomment %}
+
+{% block title %}Dashboard · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Dashboard{% endblock page_title %}
+
+{% block content %}
+  {# --- Filter bar: one row above everything it scopes ----------------------------- #}
+  <form method="get" action="{% url 'analytics:dashboard' %}" role="search" aria-label="Dashboard filters"
+        x-data="{ range: '{{ form.range.value|default:'30d' }}' }"
+        class="flex flex-wrap items-center gap-3"
+        hx-get="{% url 'analytics:dashboard' %}" hx-trigger="change"
+        hx-target="#dashboard-content" hx-select="#dashboard-content" hx-swap="outerHTML"
+        hx-push-url="true" hx-indicator="#dashboard-content" hx-sync="this:replace">
+    <div class="w-40">
+      <c-select label="Period" name="range" :options="form.range.field.choices"
+                value="{{ form.range.value|default:'30d' }}" hide_label x-model="range" />
+    </div>
+    <div x-show="range === 'custom'" x-cloak class="flex items-center gap-2">
+      <label for="id_start" class="sr-only">From</label>
+      <input id="id_start" name="start" type="date" value="{{ form.start.value|default_if_none:'' }}"
+             class="h-9 rounded-md border border-line-input bg-surface px-2 text-sm">
+      <span class="text-sm text-ink-subtle">to</span>
+      <label for="id_end" class="sr-only">To</label>
+      <input id="id_end" name="end" type="date" value="{{ form.end.value|default_if_none:'' }}"
+             class="h-9 rounded-md border border-line-input bg-surface px-2 text-sm">
+    </div>
+    <div class="w-40"><c-select label="Source" name="source" :options="form.source.field.choices" value="{{ form.source.value|default_if_none:'' }}" hide_label /></div>
+    <div class="w-48"><c-select label="Channel" name="channel" :options="form.channel.field.choices" value="{{ form.channel.value|default_if_none:'' }}" hide_label /></div>
+    <div class="w-36"><c-select label="Tag" name="tag" :options="form.tag.field.choices" value="{{ form.tag.value|default_if_none:'' }}" hide_label /></div>
+    <div class="w-40"><c-select label="Work mode" name="remote_type" :options="form.remote_type.field.choices" value="{{ form.remote_type.value|default_if_none:'' }}" hide_label /></div>
+    <div class="w-44"><c-select label="Employment" name="employment_type" :options="form.employment_type.field.choices" value="{{ form.employment_type.value|default_if_none:'' }}" hide_label /></div>
+    {% if form.has_filters %}
+      <a href="{% url 'analytics:dashboard' %}{% if form.range.value %}?range={{ form.range.value|urlencode }}{% endif %}"
+         class="text-sm text-ink-muted hover:text-ink hover:underline">Clear filters</a>
+    {% endif %}
+    {# Without JavaScript, this button applies the filters (with HTMX they apply on change). #}
+    <noscript><c-button type="submit" variant="secondary" size="sm">Apply</c-button></noscript>
+  </form>
+
+  {# --- The widgets ----------------------------------------------------------------- #}
+  <div id="dashboard-content" class="mt-5 transition-opacity [&.htmx-request]:opacity-50">
+    <p class="text-sm text-ink-muted">
+      {{ period_text }}{% if previous_text %}<span class="text-ink-subtle"> · compared with {{ previous_text }}</span>{% endif %}
+    </p>
+
+    <div class="mt-4 grid gap-6 lg:grid-cols-2">
+      {% for item in items %}
+        <section aria-labelledby="widget-{{ item.widget.key }}"
+                 class="flex flex-col overflow-hidden rounded-lg border border-line bg-surface {% if item.widget.size == 'full' %}lg:col-span-2{% endif %}">
+          <header class="px-5 pt-4">
+            <h2 id="widget-{{ item.widget.key }}" class="font-semibold tracking-tight">{{ item.widget.title }}</h2>
+            <p class="mt-0.5 text-sm text-ink-muted">{{ item.widget.description }}</p>
+          </header>
+          <div class="flex-1 px-5 py-4">{% include item.widget.template %}</div>
+          {% include "analytics/partials/table_view.html" with table=item.table %}
+        </section>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock content %}

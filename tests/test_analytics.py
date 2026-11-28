@@ -373,3 +373,8 @@ def test_only_one_active_goal_per_metric_and_period() -> None:
 def test_goal_admin(admin_client: Client) -> None:
     Goal.objects.create(target=10)
     assert admin_client.get(reverse("admin:analytics_goal_changelist")).status_code == 200
+
+
+def test_group_registry_refuses_duplicates() -> None:
+    with pytest.raises(ValueError, match="already registered"):
+        metrics.group("sent", "Again")(metrics.sent)
