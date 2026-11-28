@@ -11,9 +11,18 @@ from .models import Application, ApplicationEvent, PipelineStage, Task
 
 @admin.register(PipelineStage)
 class PipelineStageAdmin(admin.ModelAdmin):
-    list_display = ("name", "order", "category", "color", "is_default_for_category", "app_count")
+    list_display = (
+        "name",
+        "order",
+        "category",
+        "color",
+        "is_default_for_category",
+        "counts_as_interview",
+        "counts_as_ghosted",
+        "app_count",
+    )
     # list_editable: change these columns directly in the list, then "Save".
-    list_editable = ("order", "color")
+    list_editable = ("order", "color", "counts_as_interview", "counts_as_ghosted")
     list_filter = ("category",)
     search_fields = ("name",)
     readonly_fields = ("created_at", "updated_at")

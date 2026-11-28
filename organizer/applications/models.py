@@ -50,6 +50,17 @@ class PipelineStage(TimeStampedModel):
         help_text="Used when the app needs “a stage of this category”, e.g. Rejected for "
         "closing an application as lost.",
     )
+    # Roles for the dashboard. Categories are broad ("Screening" and "Interviewing" are
+    # both in progress; "Rejected" and "Ghosted" are both lost), and the app never looks
+    # at a stage's NAME, so these switches say what a stage means for the statistics.
+    counts_as_interview = models.BooleanField(
+        default=False,
+        help_text="Reaching this stage counts as getting an interview (interview rate).",
+    )
+    counts_as_ghosted = models.BooleanField(
+        default=False,
+        help_text="Ending in this stage means the employer never answered (ghosting rate).",
+    )
 
     class Meta:
         ordering = ("order", "pk")

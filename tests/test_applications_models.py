@@ -196,3 +196,15 @@ def test_stage_admin_counts_applications(admin_client: Client) -> None:
     counts = {s.name: s._app_count for s in response.context["cl"].result_list}
     assert counts["Applied"] == 2
     assert counts["Saved"] == 0
+
+
+# The data migration gave the default stages their dashboard roles (step 3.1).
+def test_default_stage_roles() -> None:
+    interview = set(
+        PipelineStage.objects.filter(counts_as_interview=True).values_list("name", flat=True)
+    )
+    ghosted = set(
+        PipelineStage.objects.filter(counts_as_ghosted=True).values_list("name", flat=True)
+    )
+    assert interview == {"Interviewing"}
+    assert ghosted == {"Ghosted"}
