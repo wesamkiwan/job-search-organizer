@@ -8,6 +8,17 @@ minor release while the project is in early development (0.x).
 
 ## [Unreleased]
 
+### Added
+
+- Dashboard groundwork: an analytics app with date ranges (presets, custom, previous
+  period), filters (source, channel, tag, work mode, employment type) and a registry of
+  tested metrics: applications sent, response, interview, offer, rejection and ghosting
+  rates, days to first response and to offer, active pipeline, follow-ups due and new
+  postings.
+- Goals such as "10 applications per week", with progress for the current week or month.
+- "Counts as interview" and "counts as ghosted" switches on pipeline stages (on for the
+  default Interviewing and Ghosted stages).
+
 ## [0.3.0] - 2026-11-27
 
 Phase 2: documents.
