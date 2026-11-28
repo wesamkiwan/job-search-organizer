@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% comment %}
+The applications behind a dashboard number or bar. Context: group (metrics.Group),
+page (Paginator page of applications), period_text, back_url, query (for page links).
+{% endcomment %}
+
+{% block title %}{{ group.label }} · Dashboard · Job Search Organizer{% endblock title %}
+
+{% block page_title %}Dashboard{% endblock page_title %}
+
+{% block content %}
+  <a href="{{ back_url }}" class="inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink">
+    <c-icon name="chevron-left" />Back to the dashboard
+  </a>
+
+  <div class="mt-4">
+    <h2 class="text-xl font-semibold tracking-tight">{{ group.label }}</h2>
+    <p class="mt-1 text-sm text-ink-muted">
+      {{ page.paginator.count }} application{{ page.paginator.count|pluralize }} · {{ period_text }}
+    </p>
+  </div>
+
+  <div class="mt-4">
+    {% if page.object_list %}
+      <c-card flush>
+        <c-table>
+          <thead>
+            <tr>
+              <th scope="col">Position</th>
+              <th scope="col">Company</th>
+              <th scope="col">Stage</th>
+              <th scope="col">Applied</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for application in page.object_list %}
+              <tr>
+                <td><a href="{{ application.get_absolute_url }}" class="font-medium text-ink hover:text-accent hover:underline">{{ application.posting.title }}</a></td>
+                <td class="text-ink-muted">{{ application.posting.company_display|default:"—" }}</td>
+                <td><c-badge tone="{{ application.stage.color }}" dot>{{ application.stage.name }}</c-badge></td>
+                <td class="whitespace-nowrap text-ink-muted">{{ application.applied_on|date:user_settings.date_format|default:"—" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </c-table>
+      </c-card>
+      {% if page.has_other_pages %}
+        <nav aria-label="Pages" class="mt-4 flex items-center justify-between text-sm">
+          {% if page.has_previous %}<a href="?{{ query }}&page={{ page.previous_page_number }}" class="text-accent hover:underline">Previous</a>{% else %}<span></span>{% endif %}
+          <span class="text-ink-muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+          {% if page.has_next %}<a href="?{{ query }}&page={{ page.next_page_number }}" class="text-accent hover:underline">Next</a>{% else %}<span></span>{% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      <c-empty-state icon="search" title="No applications" description="None match this number for the chosen period and filters." />
+    {% endif %}
+  </div>
+{% endblock content %}

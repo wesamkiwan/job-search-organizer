@@ -44,3 +44,24 @@ class Goal(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.target} {self.get_metric_display().lower()} {self.get_period_display()}"
+
+
+class DashboardLayout(TimeStampedModel):
+    """Which widgets the dashboard shows, in which order and size (one row, "Default").
+
+    widgets: [{"key": "kpis", "size": "full"}, ...] in display order.
+    hidden:  keys you removed. A widget that is in neither list is NEW (added to the code
+             later) and appears at the end, so new features don't stay invisible.
+    Read and changed only through analytics/layout.py, which ignores unknown keys (e.g.
+    a widget that was deleted from the code).
+    """
+
+    name = models.CharField(max_length=50, unique=True, default="Default")
+    widgets = models.JSONField(default=list, blank=True)
+    hidden = models.JSONField(default=list, blank=True)
+
+    class Meta:
+        verbose_name = "dashboard layout"
+
+    def __str__(self) -> str:
+        return self.name

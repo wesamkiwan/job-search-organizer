@@ -1,0 +1,21 @@
+{% comment %}
+Rejections of the period in two bar lists: how far they got ("outcome stage") and the
+reasons recorded. One hue, values as text. item.stages / item.reasons: [widgets.Bar]
+{% endcomment %}
+{% if item.total %}
+  <p class="text-sm">
+    <a href="{{ item.url }}" class="font-medium hover:text-accent hover:underline">{{ item.total }} rejection{{ item.total|pluralize }}</a>
+  </p>
+  <div class="mt-3 grid gap-5 sm:grid-cols-2">
+    <div>
+      <h3 class="mb-2 text-xs font-medium tracking-wide text-ink-subtle uppercase">Got as far as</h3>
+      {% include "analytics/partials/mini_bars.html" with list=item.stages %}
+    </div>
+    <div>
+      <h3 class="mb-2 text-xs font-medium tracking-wide text-ink-subtle uppercase">Reasons</h3>
+      {% include "analytics/partials/mini_bars.html" with list=item.reasons %}
+    </div>
+  </div>
+{% else %}
+  <p class="text-sm text-ink-muted">No rejections in this period.</p>
+{% endif %}

@@ -41,11 +41,6 @@ SAMPLE_APPLICATIONS = [
 ]  # fmt: skip
 
 
-def home(request: HttpRequest) -> HttpResponse:
-    """Render the home page (dashboard)."""
-    return render(request, "core/home.html")
-
-
 def ui_gallery(request: HttpRequest) -> HttpResponse:
     """Show every UI component in one place (development only).
 

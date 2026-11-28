@@ -10,5 +10,7 @@ urlpatterns = [
     path("companies/", include("organizer.companies.urls")),
     path("contacts/", include("organizer.companies.contact_urls")),
     path("documents/", include("organizer.documents.urls")),
+    # Both at the root: analytics owns "/" (the dashboard), core owns /settings/ and /ui/.
+    path("", include("organizer.analytics.urls")),
     path("", include("organizer.core.urls")),
 ]

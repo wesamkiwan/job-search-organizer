@@ -10,7 +10,7 @@
 | Database | SQLite (local) → PostgreSQL (hosted) | zero setup now; changed through config only |
 | Frontend | Server-rendered templates + HTMX + Alpine.js | interactive UI without a separate JavaScript application |
 | Styling | Tailwind CSS via `django-tailwind-cli` | no Node.js needed; design tokens; consistent components |
-| Charts | Apache ECharts (vendored) | rich chart types, themable, no build step |
+| Charts | server-rendered HTML with chart design tokens | no JS library; follows light/dark and HTMX; values stay text (ADR 0007) |
 | Background jobs | django-q2 (database as broker) | runs on Windows, no Redis needed |
 | HTTP / parsing | httpx, selectolax/BeautifulSoup, extruct (JSON-LD) | Playwright only if really needed |
 | Document text | pypdf, python-docx | text extraction for search and future AI |
@@ -35,7 +35,7 @@ job-search-organizer/
 │   ├── sources/             # Source, SearchProfile, SourceRun, adapters, import pipeline
 │   └── analytics/           # metrics, widgets, goals, dashboard
 ├── templates/               # base layout + components/ (buttons, cards, tables, modals…)
-├── static/                  # Tailwind input CSS, vendored JS (htmx, alpine, echarts)
+├── static/                  # Tailwind input CSS, vendored JS (htmx, alpine, sortablejs)
 ├── tests/                   # pytest; mirrors organizer/ structure
 ├── docs/                    # this specification + ADRs
 ├── .github/workflows/       # CI
@@ -84,7 +84,7 @@ Adapter.fetch(profile) ──► RawPosting ──► normalize ──► dedupl
 A **metrics registry** (`analytics/metrics.py`): each metric is a function that takes a
 filter context (date range, comparison period, filters) and returns typed data. A
 **widget registry** maps widgets to metrics and chart types. Widgets render as HTMX
-partials; chart data is served as JSON to ECharts. Expensive aggregations are cached
+partials; charts are drawn as HTML from the widget data (ADR 0007). Expensive aggregations are cached
 and invalidated on writes. See [Dashboard](05-dashboard.md).
 
 ## UI and design system

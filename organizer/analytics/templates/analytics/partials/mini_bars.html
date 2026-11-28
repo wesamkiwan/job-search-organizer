@@ -1,0 +1,18 @@
+{% comment %}
+A compact bar list (label + value above a thin bar), for lists inside a widget.
+  {% include "analytics/partials/mini_bars.html" with list=item.reasons %}
+list: [widgets.Bar]
+{% endcomment %}
+<ul class="space-y-2">
+  {% for bar in list %}
+    <li title="{{ bar.label }}: {{ bar.text }}">
+      <div class="flex items-baseline justify-between gap-2 text-sm">
+        <span class="truncate">{{ bar.label }}</span>
+        <span class="shrink-0 font-medium tabular-nums">{{ bar.text }}</span>
+      </div>
+      <div class="mt-0.5 h-2 border-l border-line-strong">
+        {% if bar.value %}<div class="h-full rounded-r-[4px] bg-chart-1" style="width: {% widthratio bar.share 1 100 %}%"></div>{% endif %}
+      </div>
+    </li>
+  {% endfor %}
+</ul>

@@ -134,7 +134,7 @@ AUTH_USER_MODEL = "accounts.User"
 
 # Where to send people: URL names, resolved by Django like {% url %}.
 LOGIN_URL = "accounts:login"  # not logged in -> here (with ?next=<page they wanted>)
-LOGIN_REDIRECT_URL = "core:home"  # after logging in, if there is no ?next=
+LOGIN_REDIRECT_URL = "analytics:dashboard"  # after logging in, if there is no ?next=
 LOGOUT_REDIRECT_URL = "accounts:login"  # after logging out
 
 # Messages framework: Django's "error" level is called "danger" in our alert component.

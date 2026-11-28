@@ -218,5 +218,5 @@ or hidden, but not deleted.
 ## Analytics configuration
 
 - **Goal:** `metric`, `target`, `period` (week / month), `is_active`. Example: 10 applications per week.
-- **DashboardLayout:** an ordered list of widgets with their size and settings (JSON). See [Dashboard](05-dashboard.md).
+- **DashboardLayout:** `name` (one row, "Default"), `widgets` = ordered list of `{key, size}` (JSON), `hidden` = removed widget keys; widgets in neither list are new and appear at the end. See [Dashboard](05-dashboard.md).
 - **UserSettings:** home location (for distance), default currency, the number of days without a response after which an application counts as ghosted (default 30), date format.

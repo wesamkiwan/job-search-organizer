@@ -1,0 +1,31 @@
+{% comment %}
+KPI tiles: label, value, change vs. the previous period, detail. The change shows an
+arrow + a signed number + a hidden word for screen readers, so its meaning never depends
+on colour alone (green = good news, red = bad, depending on the metric).
+item.tiles: [widgets.Tile]
+{% endcomment %}
+<div class="grid gap-px overflow-hidden rounded-md border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+  {% for tile in item.tiles %}
+    <div class="bg-surface px-4 py-3.5">
+      <p class="text-sm text-ink-muted" title="{{ tile.description }}">{{ tile.label }}</p>
+      <p class="mt-1 text-2xl font-semibold tracking-tight">
+        {% if tile.url %}
+          <a href="{{ tile.url }}" class="hover:text-accent hover:underline" title="Show these applications">{{ tile.value }}</a>
+        {% else %}
+          {{ tile.value }}
+        {% endif %}
+      </p>
+      <p class="mt-1 flex flex-wrap items-center gap-x-2 text-xs">
+        {% if tile.change %}
+          <span class="inline-flex items-center gap-0.5 font-medium {% if tile.is_good %}text-success{% elif tile.is_good == False %}text-danger{% else %}text-ink-muted{% endif %}">
+            <c-icon name="arrow-{{ tile.direction }}" class="size-3" />{{ tile.change }}
+            <span class="sr-only">{% if tile.is_good %}(better){% elif tile.is_good == False %}(worse){% endif %}</span>
+          </span>
+        {% elif item.compared and tile.detail != "right now" %}
+          <span class="text-ink-subtle">no change</span>
+        {% endif %}
+        {% if tile.detail %}<span class="text-ink-subtle">{{ tile.detail }}</span>{% endif %}
+      </p>
+    </div>
+  {% endfor %}
+</div>

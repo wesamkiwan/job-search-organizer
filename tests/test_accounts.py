@@ -13,7 +13,7 @@ from tests.factories import DEFAULT_PASSWORD, UserFactory
 
 LOGIN_URL = reverse("accounts:login")
 LOGOUT_URL = reverse("accounts:logout")
-HOME_URL = reverse("core:home")
+HOME_URL = reverse("analytics:dashboard")
 PASSWORD = DEFAULT_PASSWORD
 
 

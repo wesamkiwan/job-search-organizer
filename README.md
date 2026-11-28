@@ -13,7 +13,8 @@ exact documents sent, and improve the search with a dynamic analytics dashboard.
 > pipeline stages, a kanban board, companies and contacts.
 > [Phase 2](docs/06-roadmap.md) (documents) is complete as well: a document library with
 > versions, and a record of exactly which version was sent with which application.
-> Next up is Phase 3: the analytics dashboard (what works in your job search?).
+> Phase 3, the analytics dashboard, is built and waiting for its release.
+> Next up is Phase 4: custom fields and saved table views.
 
 ## Features
 
@@ -29,13 +30,17 @@ exact documents sent, and improve the search with a dynamic analytics dashboard.
   JPEG), duplicate detection, search inside the files, preview and private downloads
 - Which version was sent where: record the documents sent with each application, and
   see for every version which applications it was used in
+- Analytics dashboard (the start page): KPI tiles with trends, a weekly goal, funnel,
+  applications per week, outcomes, performance by source, channel, job profile and
+  document version, rejections, time in stage, activity calendar, salaries and
+  rule-based insights; filters, drill-down to the applications behind every number,
+  table view and CSV export, and a layout you can rearrange
 - Business rules in a tested service layer (timeline, closing, outcomes stay consistent)
 - Login required on every page, settings (currency, date format, "ghosted" threshold),
   light and dark mode, responsive layout, demo data command
 
 **Planned** (see the [roadmap](docs/06-roadmap.md))
 - Custom fields and saved table views
-- Analytics dashboard: funnel, response rates, sources, goals
 - Import from URLs, a bookmarklet, job APIs and alert emails
 
 ## Tech stack

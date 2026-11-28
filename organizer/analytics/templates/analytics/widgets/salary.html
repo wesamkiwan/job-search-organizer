@@ -1,0 +1,39 @@
+{% comment %}
+Salary range plot: per application, the advertised yearly range as a bar (slot 1) and
+your expectation as a dot (slot 2, with a ring in the surface colour so it stays visible
+on top of the bar). All rows share one scale (scale_min .. scale_max), shown underneath.
+item.rows: [performance.SalaryRow];  item.median_advertised / median_expected
+{% endcomment %}
+{% if item.rows %}
+  <div class="mb-4 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+    <p><span class="text-ink-muted">Median advertised (middle of the range):</span> <span class="font-medium">{{ item.median_advertised }}</span></p>
+    <p><span class="text-ink-muted">Median expectation:</span> <span class="font-medium">{{ item.median_expected }}</span></p>
+  </div>
+  <ul class="space-y-2.5">
+    {% for row in item.rows %}
+      <li class="grid items-center gap-x-4 gap-y-1 sm:grid-cols-[minmax(0,14rem)_1fr]">
+        <a href="{{ row.url }}" class="truncate text-sm hover:text-accent hover:underline" title="{{ row.label }}">{{ row.label }}</a>
+        <div class="relative h-4" title="Advertised: {{ row.low|default:'?' }}–{{ row.high|default:'?' }} · expected: {{ row.expected|default:'—' }}">
+          <div class="absolute inset-x-0 top-1/2 border-t border-line"></div>
+          {% if row.low or row.high %}
+            <div class="absolute top-1/2 h-1.5 min-w-1.5 -translate-y-1/2 rounded-full bg-chart-1"
+                 style="left: {% widthratio row.range_start 1 100 %}%; width: {% widthratio row.range_width 1 100 %}%"></div>
+          {% endif %}
+          {% if row.expected %}
+            <div class="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-chart-2 ring-2 ring-surface"
+                 style="left: {% widthratio row.expected_at 1 100 %}%"></div>
+          {% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+  <div class="mt-2 flex justify-between text-xs text-ink-subtle sm:ml-[calc(14rem+1rem)]">
+    <span>{{ item.scale_min }}</span><span>{{ item.scale_max }}</span>
+  </div>
+  <ul class="mt-3 flex flex-wrap gap-x-4 text-sm" aria-label="Legend">
+    <li class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="h-1.5 w-4 rounded-full bg-chart-1"></span>Advertised range</li>
+    <li class="inline-flex items-center gap-1.5"><span aria-hidden="true" class="size-2.5 rounded-full bg-chart-2"></span>Your expectation</li>
+  </ul>
+{% else %}
+  <p class="text-sm text-ink-muted">No yearly salaries in your default currency for this period. Add the ad's range or your expectation to an application.</p>
+{% endif %}
