@@ -13,7 +13,7 @@ exact documents sent, and improve the search with a dynamic analytics dashboard.
 > pipeline stages, a kanban board, companies and contacts.
 > [Phase 2](docs/06-roadmap.md) (documents) is complete as well: a document library with
 > versions, and a record of exactly which version was sent with which application.
-> Phase 3, the analytics dashboard, is built and waiting for its release.
+> Phase 3, the analytics dashboard, is complete too (v0.4.0).
 > Next up is Phase 4: custom fields and saved table views.
 
 ## Features

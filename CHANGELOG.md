@@ -8,6 +8,10 @@ minor release while the project is in early development (0.x).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-28
+
+Phase 3: the analytics dashboard.
+
 ### Added
 
 - Dashboard groundwork: an analytics app with date ranges (presets, custom, previous
@@ -96,7 +100,8 @@ Phase 0: the foundation.
 - Login and logout with a custom user model, and a settings page.
 - README and MIT license.
 
-[Unreleased]: https://github.com/wesamkiwan/job-search-organizer/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/wesamkiwan/job-search-organizer/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/wesamkiwan/job-search-organizer/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/wesamkiwan/job-search-organizer/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/wesamkiwan/job-search-organizer/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/wesamkiwan/job-search-organizer/releases/tag/v0.1.0
