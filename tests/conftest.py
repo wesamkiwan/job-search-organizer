@@ -6,6 +6,7 @@ conftest.py is a special file name: pytest loads it automatically, nobody import
 from pathlib import Path
 
 import pytest
+from django.core.cache import cache
 from pytest_django import Settings
 
 
@@ -20,3 +21,13 @@ def media_root(settings: Settings, tmp_path: Path) -> Path:
     folder = tmp_path / "media"
     settings.MEDIA_ROOT = folder
     return folder
+
+
+@pytest.fixture(autouse=True)
+def empty_cache() -> None:
+    """Start every test with an empty cache (the dashboard caches widget data).
+
+    The test database is rolled back after each test WITHOUT "deleted" signals, so the
+    cache's data version wouldn't notice; old entries could leak into the next test.
+    """
+    cache.clear()

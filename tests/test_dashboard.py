@@ -282,11 +282,6 @@ def test_widget_registry_refuses_duplicates() -> None:
         widgets.widget("kpis", "Again", "", "kpis.html")(widgets.kpis)
 
 
-def test_render_data_skips_unknown_widgets() -> None:
-    data = widgets.render_data(("kpis", "nonsense"), last_30_days(), Links())
-    assert [d["widget"].key for d in data] == ["kpis"]
-
-
 # --- pages -------------------------------------------------------------------------------
 
 

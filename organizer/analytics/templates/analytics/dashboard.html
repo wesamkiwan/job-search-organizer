@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% comment %}
 The dashboard (start page). Context:
   form:          DashboardFilterForm (the filter bar)
@@ -50,23 +51,82 @@ half opacity (hx-indicator adds the htmx-request class): no flash, no layout jum
   </form>
 
   {# --- The widgets ----------------------------------------------------------------- #}
-  <div id="dashboard-content" class="mt-5 transition-opacity [&.htmx-request]:opacity-50">
-    <p class="text-sm text-ink-muted">
-      {{ period_text }}{% if previous_text %}<span class="text-ink-subtle"> · compared with {{ previous_text }}</span>{% endif %}
-    </p>
+  {# x-data: "editing" switches the customize mode on and off (Alpine). The layout     #}
+  {# itself is saved by static/js/dashboard.js; data-layout-url/csrf-token are for it. #}
+  <div id="dashboard-content" x-data="{ editing: false }"
+       data-layout-url="{% url 'analytics:layout_save' %}" data-csrf-token="{{ csrf_token }}"
+       class="mt-5 transition-opacity [&.htmx-request]:opacity-50">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <p class="text-sm text-ink-muted">
+        {{ period_text }}{% if previous_text %}<span class="text-ink-subtle"> · compared with {{ previous_text }}</span>{% endif %}
+      </p>
+      <c-button size="sm" variant="ghost" @click="editing = !editing" x-bind:aria-pressed="editing">
+        <c-icon name="settings" /><span x-text="editing ? 'Done' : 'Customize'">Customize</span>
+      </c-button>
+    </div>
 
-    <div class="mt-4 grid gap-6 lg:grid-cols-2">
+    {# Customize mode: what to add back, and the way back to the default layout. #}
+    <div x-show="editing" x-cloak class="mt-4 rounded-lg border border-dashed border-line-strong bg-surface p-4 text-sm">
+      <p class="text-ink-muted">
+        Drag a widget by its <c-icon name="grip-vertical" class="inline size-4" /> handle, make it half or full width, or remove it.
+        Changes are saved right away.
+      </p>
+      {% if hidden %}
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <span class="font-medium">Add a widget:</span>
+          {% for widget in hidden %}
+            <form method="post" action="{% url 'analytics:layout_show' %}">
+              {% csrf_token %}
+              <input type="hidden" name="key" value="{{ widget.key }}">
+              <input type="hidden" name="query" value="{{ query }}">
+              <c-button type="submit" size="sm" variant="secondary"><c-icon name="plus" />{{ widget.title }}</c-button>
+            </form>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <form method="post" action="{% url 'analytics:layout_reset' %}" class="mt-3">
+        {% csrf_token %}
+        <input type="hidden" name="query" value="{{ query }}">
+        <button type="submit" class="text-ink-muted hover:text-ink hover:underline">Reset to the default layout</button>
+      </form>
+      <p id="layout-status" role="status" class="mt-2 text-danger" hidden></p>
+    </div>
+
+    <div id="dashboard-grid" class="mt-4 grid gap-6 lg:grid-cols-2">
       {% for item in items %}
-        <section aria-labelledby="widget-{{ item.widget.key }}"
-                 class="flex flex-col overflow-hidden rounded-lg border border-line bg-surface {% if item.widget.size == 'full' %}lg:col-span-2{% endif %}">
-          <header class="px-5 pt-4">
-            <h2 id="widget-{{ item.widget.key }}" class="font-semibold tracking-tight">{{ item.widget.title }}</h2>
-            <p class="mt-0.5 text-sm text-ink-muted">{{ item.widget.description }}</p>
+        <section aria-labelledby="widget-{{ item.widget.key }}" data-widget="{{ item.widget.key }}" data-size="{{ item.size }}"
+                 class="flex flex-col overflow-hidden rounded-lg border border-line bg-surface {% if item.size == 'full' %}lg:col-span-2{% endif %}"
+                 :class="editing && 'ring-2 ring-accent-soft'">
+          <header class="flex items-start justify-between gap-3 px-5 pt-4">
+            <div>
+              <h2 id="widget-{{ item.widget.key }}" class="font-semibold tracking-tight">{{ item.widget.title }}</h2>
+              <p class="mt-0.5 text-sm text-ink-muted">{{ item.widget.description }}</p>
+            </div>
+            <div x-show="editing" x-cloak class="flex shrink-0 items-center gap-0.5">
+              <button type="button" data-drag-handle title="Drag to move" class="inline-flex size-8 cursor-grab items-center justify-center rounded-md text-ink-muted hover:bg-surface-muted hover:text-ink">
+                <c-icon name="grip-vertical" /><span class="sr-only">Move {{ item.widget.title }}</span>
+              </button>
+              <button type="button" data-size-toggle class="hidden h-8 rounded-md px-2 text-xs font-medium text-ink-muted hover:bg-surface-muted hover:text-ink lg:inline-flex lg:items-center">
+                <span data-size-label>{% if item.size == 'full' %}Half width{% else %}Full width{% endif %}</span>
+              </button>
+              <button type="button" data-remove title="Remove from the dashboard" class="inline-flex size-8 items-center justify-center rounded-md text-ink-muted hover:bg-danger-soft hover:text-danger">
+                <c-icon name="x" /><span class="sr-only">Remove {{ item.widget.title }}</span>
+              </button>
+            </div>
           </header>
           <div class="flex-1 px-5 py-4">{% include item.widget.template %}</div>
-          {% include "analytics/partials/table_view.html" with table=item.table %}
+          {% include "analytics/partials/table_view.html" with table=item.table key=item.widget.key %}
         </section>
+      {% empty %}
+        <div class="lg:col-span-2">
+          <c-empty-state icon="layout-dashboard" title="No widgets on the dashboard" description="Add some back with Customize, or reset the layout." />
+        </div>
       {% endfor %}
     </div>
   </div>
 {% endblock content %}
+
+{% block scripts %}
+  <script src="{% static 'vendor/sortablejs/sortable.min.js' %}" defer></script>
+  <script src="{% static 'js/dashboard.js' %}" defer></script>
+{% endblock scripts %}

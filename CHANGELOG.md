@@ -32,6 +32,10 @@ minor release while the project is in early development (0.x).
 - Insights panel: rule-based findings (best vs. worst channel, source and document
   version; silent applications to follow up; behind the weekly goal), shown only with
   enough data.
+- Customizable dashboard: drag widgets into another order, switch them between half and
+  full width, remove and add them back, or reset the layout.
+- CSV export of every widget (semicolon-separated, opens correctly in German Excel).
+- Caching of the dashboard data, refreshed automatically when data changes.
 
 ## [0.3.0] - 2026-11-27
 

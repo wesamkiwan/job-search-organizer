@@ -1,6 +1,9 @@
 {% comment %}
 "Show as table" under every widget: the same data as text, so no value can only be read
-from a colour, a bar length or a hover tooltip (accessibility). table: widgets.Table.
+from a colour, a bar length or a hover tooltip (accessibility), plus a CSV download of
+exactly this table with the current filters.
+  {% include "analytics/partials/table_view.html" with table=item.table key=item.widget.key %}
+table: widgets.Table;  key: the widget key;  query (from the page): the current filters
 {% endcomment %}
 {% if table.rows %}
   <details class="border-t border-line px-5 py-2.5 text-sm">
@@ -17,5 +20,11 @@ from a colour, a bar length or a hover tooltip (accessibility). table: widgets.T
         </tbody>
       </table>
     </div>
+    {% if key %}
+      <a href="{% url 'analytics:export' key %}{% if query %}?{{ query }}{% endif %}"
+         class="mt-2 inline-flex items-center gap-1.5 text-accent hover:underline">
+        <c-icon name="download" />Download as CSV
+      </a>
+    {% endif %}
   </details>
 {% endif %}

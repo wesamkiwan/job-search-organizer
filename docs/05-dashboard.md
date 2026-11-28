@@ -83,4 +83,8 @@ The analytics are only as good as the tracking. The app supports this by:
 - Charts are server-rendered HTML styled with chart design tokens (light/dark), see ADR 0007.
 - Aggregations happen in the database (Django ORM aggregation); results are cached per
   filter context and invalidated on relevant writes.
-- Export: any widget's data as CSV; chart as PNG.
+- Export: any widget's data as CSV (semicolon-separated for German Excel, protected against
+  formula injection). PNG export was dropped with the switch to server-rendered charts
+  (ADR 0007).
+- Caching: widget data is cached per filter context and a data version that any relevant
+  save or delete bumps (signals).

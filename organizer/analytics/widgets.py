@@ -412,10 +412,3 @@ DEFAULT_LAYOUT = (
     "activity",
     "salary",
 )
-
-
-def render_data(keys: tuple[str, ...], ctx: FilterContext, links: Links) -> list[dict[str, Any]]:
-    """Each widget with its computed data, in this order (unknown keys are skipped)."""
-    return [
-        {"widget": WIDGETS[key], **WIDGETS[key].build(ctx, links)} for key in keys if key in WIDGETS
-    ]
