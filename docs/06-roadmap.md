@@ -1,7 +1,9 @@
 # 6. Roadmap
 
-Each phase ends with working, tested and documented software. Tasks within a phase are
-done on feature branches.
+Each phase ends with working, tested and documented software and a minor release (0.x).
+Tasks within a phase are done on feature branches. Phases are numbered in the order they
+are built: the dashboard (now Phase 3) was moved before custom fields (now Phase 4), because
+it helps the job search sooner.
 
 ## Phase 0: Foundation
 - uv project, Django 5.2, split settings, `.env.example`
@@ -25,15 +27,16 @@ done on feature branches.
 - Upload with versioning, duplicate detection (sha256), text extraction
 - Attach versions to applications; "used in" view per version; protected downloads
 
-## Phase 3: Flexible fields & views
-- FieldDefinition + dynamic forms + validation; BuiltinFieldSetting
-- SavedView: configurable table columns, filters, sorting
-- Custom fields in list, detail, filters and export
-
-## Phase 4: Dashboard & analytics
+## Phase 3: Dashboard & analytics
 - Metrics and widget registries, filter bar, KPI tiles, core charts (funnel, over time, by source/channel, outcomes)
 - Goals, customizable layout, drill-down
 - Document-version performance, rejection analysis, insights panel
+
+## Phase 4: Flexible fields & views
+- FieldDefinition + dynamic forms + validation; BuiltinFieldSetting
+- SavedView: configurable table columns, filters, sorting
+- Custom fields in list, detail, filters and export
+- Choice and number custom fields as dashboard dimensions and measures
 
 ## Phase 5: Capture: URL import & bookmarklet
 - Inbox and triage workflow (keyboard shortcuts)

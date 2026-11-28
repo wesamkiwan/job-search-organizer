@@ -64,6 +64,7 @@ User-configurable stages. The app's logic depends on the **category**, never on 
 | name, order, color | |
 | category | `saved`, `applied`, `in_progress`, `offer`, `won`, `lost`, `withdrawn` |
 | is_default_for_category | |
+| counts_as_interview, counts_as_ghosted | roles for the dashboard: reaching the stage counts as an interview / ending in it counts as ghosted (defaults: Interviewing, Ghosted) |
 
 Default stages: Saved → Applied → Screening → Interviewing → Offer → Accepted, plus
 Rejected, Withdrawn and Ghosted (category `lost`).
