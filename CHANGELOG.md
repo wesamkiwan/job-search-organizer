@@ -24,6 +24,14 @@ minor release while the project is in early development (0.x).
   funnel, applications per week with the goal line, the pipeline by stage and the
   outcomes. Every number and bar links to the applications behind it, and every widget
   can be shown as a table.
+- "What works?" widgets: performance by document version (A/B comparison), source,
+  channel and job profile (work mode, employment type, seniority), with response and
+  interview rates and a "few data" mark below 5 applications; rejections by stage
+  reached and reason; average time in each stage; applications by weekday with their
+  response rate; an activity calendar; advertised salary ranges vs. your expectation.
+- Insights panel: rule-based findings (best vs. worst channel, source and document
+  version; silent applications to follow up; behind the weekly goal), shown only with
+  enough data.
 
 ## [0.3.0] - 2026-11-27
 

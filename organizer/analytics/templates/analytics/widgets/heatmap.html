@@ -1,0 +1,33 @@
+{% comment %}
+Activity calendar: one column per week, one row per weekday, colour = how much happened
+that day (one hue, light = little, dark = a lot; in dark mode reversed, so "more" is
+always more contrast). Days outside the period are faded. A scale legend explains the
+colours; every day's count is in the cell's tooltip and in the table view.
+item.grid: [[performance.Cell] x 7 per week];  item.weekdays;  item.levels;  item.total
+{% endcomment %}
+{% if item.total %}
+  <div class="flex gap-2 overflow-x-auto pb-1">
+    <div class="flex shrink-0 flex-col gap-1 pt-0.5 text-[11px] text-ink-subtle" aria-hidden="true">
+      {% for name in item.weekdays %}<span class="flex h-3.5 items-center">{% if forloop.counter0|divisibleby:2 %}{{ name }}{% endif %}</span>{% endfor %}
+    </div>
+    <div class="flex gap-1" role="img" aria-label="{{ item.total }} activities in this period. The table view lists every day.">
+      {% for week in item.grid %}
+        <div class="flex flex-col gap-1">
+          {% for cell in week %}
+            <span class="block size-3.5 rounded-[3px] {{ cell.classes }} {% if not cell.in_period %}opacity-30{% endif %}"
+                  title="{{ cell.day|date:user_settings.date_format }}: {{ cell.count }} activit{{ cell.count|pluralize:'y,ies' }}"></span>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="mt-3 flex items-center gap-1.5 text-xs text-ink-subtle" aria-hidden="true">
+    Less
+    <span class="size-3 rounded-[3px] bg-surface-muted"></span>
+    {% for level in item.levels %}<span class="size-3 rounded-[3px] {{ level }}"></span>{% endfor %}
+    More
+    <span class="ml-3">{{ item.total }} activit{{ item.total|pluralize:"y,ies" }} in total</span>
+  </div>
+{% else %}
+  <p class="text-sm text-ink-muted">No activity in this period.</p>
+{% endif %}

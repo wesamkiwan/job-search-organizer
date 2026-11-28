@@ -392,7 +392,26 @@ def outcomes(ctx: FilterContext, links: Links) -> dict[str, Any]:
 
 # --- the default layout ----------------------------------------------------------------------
 
-DEFAULT_LAYOUT = ("kpis", "goal", "funnel", "weekly", "pipeline", "outcomes")
+DEFAULT_LAYOUT = (
+    # batch B: the overview
+    "insights",
+    "kpis",
+    "goal",
+    "funnel",
+    "weekly",
+    "pipeline",
+    "outcomes",
+    # batch C: what works? (registered in performance.py and insights.py)
+    "documents",
+    "sources",
+    "channels",
+    "profiles",
+    "rejections",
+    "time_in_stage",
+    "weekday",
+    "activity",
+    "salary",
+)
 
 
 def render_data(keys: tuple[str, ...], ctx: FilterContext, links: Links) -> list[dict[str, Any]]:

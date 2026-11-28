@@ -1,0 +1,49 @@
+{% comment %}
+A performance table: one row per group (source, channel, document version, ...) with the
+number sent and two meters (response rate, interview rate). Each meter's track is the
+lightest step of the same hue; the percentage is always printed next to it. Groups with
+fewer than item.min_sample applications are marked "few data": their rates can be chance.
+item.sections: [{"title": str, "rows": [performance.Row]}];  item.empty_text
+{% endcomment %}
+{% if item.sections %}
+  {% for section in item.sections %}
+    {% if section.title %}<h3 class="{% if not forloop.first %}mt-5{% endif %} mb-1 text-xs font-medium tracking-wide text-ink-subtle uppercase">{{ section.title }}</h3>{% endif %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm tabular-nums">
+        <thead>
+          <tr class="text-xs text-ink-muted">
+            <th scope="col" class="py-1.5 pr-3 font-medium">{% if section.title %}{{ section.title }}{% else %}Group{% endif %}</th>
+            <th scope="col" class="py-1.5 pr-3 text-right font-medium">Sent</th>
+            <th scope="col" class="w-1/4 py-1.5 pr-3 font-medium">Response rate</th>
+            <th scope="col" class="w-1/4 py-1.5 font-medium">Interview rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in section.rows %}
+            <tr class="border-t border-line {% if row.few %}text-ink-muted{% endif %}">
+              <td class="py-2 pr-3">
+                {% if row.url %}<a href="{{ row.url }}" class="hover:text-accent hover:underline">{{ row.label }}</a>{% else %}{{ row.label }}{% endif %}
+                {% if row.few %}<span class="ml-1 text-xs text-ink-subtle" title="Fewer than {{ item.min_sample }} applications: the rates may be chance.">few data</span>{% endif %}
+              </td>
+              <td class="py-2 pr-3 text-right">{{ row.sent }}</td>
+              <td class="py-2 pr-3">
+                <div class="flex items-center gap-2">
+                  <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-chart-heat-1"><div class="h-full rounded-full bg-chart-1" style="width: {% widthratio row.responded row.sent 100 %}%"></div></div>
+                  <span class="w-9 text-right text-xs">{% widthratio row.responded row.sent 100 %}%</span>
+                </div>
+              </td>
+              <td class="py-2">
+                <div class="flex items-center gap-2">
+                  <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-chart-heat-1"><div class="h-full rounded-full bg-chart-1" style="width: {% widthratio row.interviewed row.sent 100 %}%"></div></div>
+                  <span class="w-9 text-right text-xs">{% widthratio row.interviewed row.sent 100 %}%</span>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+{% else %}
+  <p class="text-sm text-ink-muted">{{ item.empty_text }}</p>
+{% endif %}

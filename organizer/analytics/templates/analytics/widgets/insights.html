@@ -1,0 +1,24 @@
+{% comment %}
+Rule-based findings. Each one has a label (Finding / Attention / Note) next to its
+colour, so the meaning never depends on colour alone. item.insights: [insights.Insight]
+{% endcomment %}
+{% if item.insights %}
+  <ul class="space-y-2.5">
+    {% for insight in item.insights %}
+      <li class="flex items-start gap-3 text-sm">
+        {% if insight.tone == "success" %}<c-badge tone="success">Finding</c-badge>
+        {% elif insight.tone == "warning" %}<c-badge tone="warning">Attention</c-badge>
+        {% else %}<c-badge tone="info">Note</c-badge>{% endif %}
+        <p>
+          {{ insight.text }}
+          {% if insight.url %}<a href="{{ insight.url }}" class="ml-1 text-accent hover:underline">{{ insight.link_text }}</a>{% endif %}
+        </p>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <p class="text-sm text-ink-muted">
+    Nothing stands out yet. Findings appear once there are at least {{ item.min_sample }}
+    applications in the groups being compared, so they aren't just chance.
+  </p>
+{% endif %}
